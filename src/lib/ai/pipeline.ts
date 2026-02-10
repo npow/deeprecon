@@ -17,7 +17,9 @@ import {
   VERTICAL_MAP_PROMPT,
 } from "./prompts"
 
-const client = new Anthropic()
+const client = new Anthropic({
+  timeout: 5 * 60 * 1000, // 5 minutes
+})
 
 async function callClaude(
   systemPrompt: string,

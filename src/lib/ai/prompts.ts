@@ -199,7 +199,7 @@ For each sub-category, provide:
 - playerCount: Approximate number of notable companies in this sub-category
 - totalFunding: Total funding raised by companies in this sub-category (e.g., "$2.4B")
 - trendDirection: "heating_up", "stable", or "cooling_down"
-- topPlayers: Array of 3-5 most notable companies, each with:
+- topPlayers: Array of 3 most notable companies, each with:
   - name: Company name
   - oneLiner: What they do in one sentence
   - funding: Total funding raised (e.g., "$150M")
@@ -208,7 +208,7 @@ For each sub-category, provide:
 - deepDivePrompt: A specific startup idea description (1-2 sentences) that exploits the biggest gap in this sub-category. This should be concrete enough to run through a competitive analysis tool.
 
 IMPORTANT:
-- Include 10-15 sub-categories that meaningfully divide this vertical
+- Include 8-12 sub-categories that meaningfully divide this vertical
 - Be thorough — cover the full landscape, not just the obvious players
 - Crowdedness and opportunity scores should be CALIBRATED: use the full 0-100 range. Don't cluster everything around 50.
 - High crowdedness does NOT mean low opportunity. A crowded space can still have high opportunity if incumbents are weak.
