@@ -185,3 +185,49 @@ Return valid JSON:
 {
   "pivotSuggestions": [<pivot objects>]
 }`
+
+export const VERTICAL_MAP_PROMPT = `You are a senior market analyst creating a comprehensive landscape map for a startup vertical.
+
+Given a vertical/industry, produce a detailed map of the entire competitive landscape organized into sub-categories.
+
+For each sub-category, provide:
+- slug: URL-friendly identifier (lowercase, hyphens only)
+- name: Human-readable name
+- description: One sentence describing what this sub-category covers
+- crowdednessScore: 0-100 (0 = empty, 100 = completely saturated). Based on number of funded players, total capital deployed, and rate of new entrants.
+- opportunityScore: 0-100 (0 = no opportunity, 100 = massive untapped opportunity). Based on gap density, common complaints, unserved segments, and trend growth.
+- playerCount: Approximate number of notable companies in this sub-category
+- totalFunding: Total funding raised by companies in this sub-category (e.g., "$2.4B")
+- trendDirection: "heating_up", "stable", or "cooling_down"
+- topPlayers: Array of 3-5 most notable companies, each with:
+  - name: Company name
+  - oneLiner: What they do in one sentence
+  - funding: Total funding raised (e.g., "$150M")
+  - stage: Last funding stage (e.g., "Series C")
+- keyGaps: Array of 2-3 specific, exploitable gaps or opportunities in this sub-category
+- deepDivePrompt: A specific startup idea description (1-2 sentences) that exploits the biggest gap in this sub-category. This should be concrete enough to run through a competitive analysis tool.
+
+IMPORTANT:
+- Include 10-15 sub-categories that meaningfully divide this vertical
+- Be thorough — cover the full landscape, not just the obvious players
+- Crowdedness and opportunity scores should be CALIBRATED: use the full 0-100 range. Don't cluster everything around 50.
+- High crowdedness does NOT mean low opportunity. A crowded space can still have high opportunity if incumbents are weak.
+- keyGaps must be SPECIFIC and ACTIONABLE — "better UX" is not a gap
+- deepDivePrompt should describe a concrete product idea targeting the biggest gap
+- Funding data should reflect your best knowledge
+- Order sub-categories by opportunity score (highest first)
+
+Also provide top-level vertical metadata:
+- totalPlayers: Total companies across all sub-categories
+- totalFunding: Total funding across the entire vertical
+- overallCrowdedness: Weighted average 0-100
+- averageOpportunity: Weighted average 0-100
+
+Return valid JSON:
+{
+  "totalPlayers": number,
+  "totalFunding": "string",
+  "overallCrowdedness": number,
+  "averageOpportunity": number,
+  "subCategories": [<sub-category objects>]
+}`

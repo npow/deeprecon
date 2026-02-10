@@ -1,7 +1,9 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
-import { Search, Clipboard, Download, ArrowRight, Radar, Zap, Shield, Target, Settings, ChevronDown } from "lucide-react"
+import { useState, useRef, useCallback, useEffect, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
+import Link from "next/link"
+import { Search, Clipboard, Download, ArrowRight, Radar, Zap, Shield, Target, Settings, ChevronDown, Map } from "lucide-react"
 import { ScanProgress } from "@/components/scan-progress"
 import { LandscapeTab } from "@/components/results/landscape-tab"
 import { GapsTab } from "@/components/results/gaps-tab"
@@ -23,6 +25,14 @@ type AppState = "landing" | "scanning" | "results" | "error"
 type ResultTab = "landscape" | "gaps" | "dd_report" | "pivots"
 
 export default function Home() {
+  return (
+    <Suspense>
+      <HomeInner />
+    </Suspense>
+  )
+}
+
+function HomeInner() {
   const [appState, setAppState] = useState<AppState>("landing")
   const [ideaText, setIdeaText] = useState("")
   const [currentStage, setCurrentStage] = useState("")
@@ -43,6 +53,15 @@ export default function Home() {
   const [showSettings, setShowSettings] = useState(false)
 
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const searchParams = useSearchParams()
+
+  // Pre-fill from ?idea= query param (deep dive from maps)
+  useEffect(() => {
+    const idea = searchParams.get("idea")
+    if (idea && !ideaText) {
+      setIdeaText(idea)
+    }
+  }, [searchParams])
 
   const startScan = useCallback(async () => {
     if (!ideaText.trim() || ideaText.trim().length < 10) return
@@ -196,7 +215,13 @@ export default function Home() {
               <Radar className="h-5 w-5 text-brand-600" />
               <span className="font-bold text-gray-900">Recon</span>
             </div>
-            <span className="text-xs text-gray-400">Competitive Intelligence for Founders</span>
+            <Link
+              href="/maps"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              <Map className="h-3.5 w-3.5" />
+              Market Maps
+            </Link>
           </div>
         </nav>
 
@@ -390,6 +415,13 @@ export default function Home() {
             <span className="font-bold text-gray-900">Recon</span>
           </button>
           <div className="flex items-center gap-2">
+            <Link
+              href="/maps"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              <Map className="h-3.5 w-3.5" />
+              Maps
+            </Link>
             <button
               onClick={handleExportMarkdown}
               className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-colors"

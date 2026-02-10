@@ -152,6 +152,53 @@ export interface ScanResult {
   createdAt: string
 }
 
+// ─── Market Maps ───
+
+export interface SubCategoryPlayer {
+  name: string
+  oneLiner: string
+  funding: string
+  stage: string
+}
+
+export interface SubCategory {
+  slug: string
+  name: string
+  description: string
+  crowdednessScore: number // 0-100
+  opportunityScore: number // 0-100
+  playerCount: number
+  totalFunding: string
+  trendDirection: "heating_up" | "stable" | "cooling_down"
+  topPlayers: SubCategoryPlayer[]
+  keyGaps: string[]
+  deepDivePrompt: string
+}
+
+export interface VerticalMap {
+  slug: string
+  name: string
+  description: string
+  generatedAt: string
+  totalPlayers: number
+  totalFunding: string
+  overallCrowdedness: number // 0-100
+  averageOpportunity: number // 0-100
+  subCategories: SubCategory[]
+}
+
+export interface VerticalDefinition {
+  slug: string
+  name: string
+  description: string
+}
+
+export const VERTICALS: VerticalDefinition[] = [
+  { slug: "ai-ml", name: "AI & Machine Learning", description: "AI infrastructure, applications, and tooling across all industries" },
+  { slug: "fintech", name: "Fintech", description: "Financial technology including payments, banking, lending, insurance, and crypto" },
+  { slug: "devtools", name: "Developer Tools", description: "Tools, platforms, and infrastructure for software developers" },
+]
+
 // SSE event types
 export type ScanEvent =
   | { type: "intent_extracted"; data: IntentExtraction }

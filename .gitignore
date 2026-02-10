@@ -26,6 +26,9 @@ yarn-error.log*
 .env*.local
 .env
 
+# generated map data
+/data/maps/
+
 # vercel
 .vercel
 

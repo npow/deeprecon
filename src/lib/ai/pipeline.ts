@@ -14,6 +14,7 @@ import {
   GAP_ANALYSIS_PROMPT,
   DD_REPORT_PROMPT,
   PIVOT_SUGGESTIONS_PROMPT,
+  VERTICAL_MAP_PROMPT,
 } from "./prompts"
 
 const client = new Anthropic()
@@ -191,4 +192,23 @@ ${gapAnalysis.unservedSegments.map((s) => `- ${s.segment}: ${s.whyUnserved}`).jo
 
   const parsed = JSON.parse(extractJSON(response))
   return parsed.pivotSuggestions || parsed
+}
+
+export async function generateVerticalMap(
+  verticalName: string,
+  verticalDescription: string
+): Promise<{
+  totalPlayers: number
+  totalFunding: string
+  overallCrowdedness: number
+  averageOpportunity: number
+  subCategories: import("@/lib/types").SubCategory[]
+}> {
+  const response = await callClaude(
+    VERTICAL_MAP_PROMPT,
+    `Generate a comprehensive landscape map for this vertical:\n\nVERTICAL: ${verticalName}\nDESCRIPTION: ${verticalDescription}`,
+    "claude-sonnet-4-5-20250929",
+    8192
+  )
+  return JSON.parse(extractJSON(response))
 }
