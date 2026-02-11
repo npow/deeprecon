@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk"
+import { GoogleGenerativeAI } from "@google/generative-ai"
 import {
   IntentExtraction,
   Competitor,
@@ -7,6 +7,8 @@ import {
   PivotSuggestion,
   ScanSettings,
   DEFAULT_SETTINGS,
+  SubCategory,
+  SubCategoryPlayer,
 } from "@/lib/types"
 import {
   INTENT_EXTRACTION_PROMPT,
@@ -15,49 +17,58 @@ import {
   DD_REPORT_PROMPT,
   PIVOT_SUGGESTIONS_PROMPT,
   VERTICAL_MAP_PROMPT,
+  SUBCATEGORY_ENRICH_PROMPT,
 } from "./prompts"
 
-const client = new Anthropic({
-  timeout: 5 * 60 * 1000, // 5 minutes
-})
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
-async function callClaude(
+async function callLLM(
   systemPrompt: string,
   userMessage: string,
-  model: string = "claude-sonnet-4-5-20250929",
+  model: string = "gemini-2.5-flash",
   maxTokens: number = 8192
 ): Promise<string> {
-  const response = await client.messages.create({
+  const genModel = genAI.getGenerativeModel({
     model,
-    max_tokens: maxTokens,
-    messages: [{ role: "user", content: userMessage }],
-    system: systemPrompt,
+    systemInstruction: systemPrompt,
+    generationConfig: {
+      maxOutputTokens: maxTokens,
+      responseMimeType: "application/json",
+    },
   })
 
-  const textBlock = response.content.find((block) => block.type === "text")
-  if (!textBlock || textBlock.type !== "text") {
-    throw new Error("No text response from Claude")
+  const result = await genModel.generateContent(userMessage)
+  const text = result.response.text()
+  if (!text) {
+    throw new Error("No text response from Gemini")
   }
-  return textBlock.text
+  return text
 }
 
 function extractJSON(text: string): string {
   // Try to find JSON in markdown code blocks first
   const codeBlockMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/)
-  if (codeBlockMatch) return codeBlockMatch[1].trim()
+  let raw = codeBlockMatch ? codeBlockMatch[1].trim() : null
 
-  // Try to find raw JSON object
-  const jsonMatch = text.match(/\{[\s\S]*\}/)
-  if (jsonMatch) return jsonMatch[0]
+  if (!raw) {
+    // Try to find raw JSON object
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (jsonMatch) raw = jsonMatch[0]
+  }
 
-  throw new Error("No JSON found in response")
+  if (!raw) throw new Error("No JSON found in response")
+
+  // Fix common LLM JSON issues: trailing commas before } or ]
+  raw = raw.replace(/,\s*([}\]])/g, "$1")
+
+  return raw
 }
 
 export async function extractIntent(ideaText: string): Promise<IntentExtraction> {
-  const response = await callClaude(
+  const response = await callLLM(
     INTENT_EXTRACTION_PROMPT,
     `Analyze this startup idea:\n\n"${ideaText}"`,
-    "claude-haiku-4-5-20251001",
+    "gemini-2.5-flash",
     1024
   )
   return JSON.parse(extractJSON(response))
@@ -78,7 +89,7 @@ export async function analyzeCompetition(
       ? `Be exhaustive. Include up to ${settings.maxCompetitors} competitors — direct, indirect, and adjacent players. Provide maximum detail per competitor.`
       : `Include up to ${settings.maxCompetitors} competitors, prioritized by similarity score.`
 
-  const response = await callClaude(
+  const response = await callLLM(
     COMPETITIVE_ANALYSIS_PROMPT + `\n\nADDITIONAL INSTRUCTIONS: ${depthInstruction}`,
     `STARTUP IDEA: "${ideaText}"
 
@@ -105,7 +116,7 @@ export async function analyzeGaps(
     )
     .join("\n")
 
-  const response = await callClaude(
+  const response = await callLLM(
     GAP_ANALYSIS_PROMPT,
     `STARTUP IDEA: "${ideaText}"
 ONE-LINER: ${intent.oneLinerSummary}
@@ -135,7 +146,7 @@ export async function generateDDReport(
     .map((g) => `- ${g.opportunity} (${g.potentialImpact} impact): ${g.evidence}`)
     .join("\n")
 
-  const response = await callClaude(
+  const response = await callLLM(
     DD_REPORT_PROMPT,
     `STARTUP IDEA: "${ideaText}"
 ONE-LINER: ${intent.oneLinerSummary}
@@ -173,7 +184,7 @@ export async function generatePivots(
     .map((g) => `- ${g.opportunity}: ${g.evidence}`)
     .join("\n")
 
-  const response = await callClaude(
+  const response = await callLLM(
     PIVOT_SUGGESTIONS_PROMPT,
     `STARTUP IDEA: "${ideaText}"
 ONE-LINER: ${intent.oneLinerSummary}
@@ -188,7 +199,7 @@ ${gaps}
 
 UNSERVED SEGMENTS:
 ${gapAnalysis.unservedSegments.map((s) => `- ${s.segment}: ${s.whyUnserved}`).join("\n")}`,
-    "claude-sonnet-4-5-20250929",
+    "gemini-2.5-flash",
     4096
   )
 
@@ -200,17 +211,48 @@ export async function generateVerticalMap(
   verticalName: string,
   verticalDescription: string
 ): Promise<{
+  schemaVersion: number
   totalPlayers: number
   totalFunding: string
   overallCrowdedness: number
   averageOpportunity: number
+  megaCategories: import("@/lib/types").MegaCategoryDef[]
+  strategyCanvasFactors: string[]
   subCategories: import("@/lib/types").SubCategory[]
 }> {
-  const response = await callClaude(
+  const response = await callLLM(
     VERTICAL_MAP_PROMPT,
     `Generate a comprehensive landscape map for this vertical:\n\nVERTICAL: ${verticalName}\nDESCRIPTION: ${verticalDescription}`,
-    "claude-sonnet-4-5-20250929",
-    8192
+    "gemini-2.5-flash",
+    65536
   )
+  return JSON.parse(extractJSON(response))
+}
+
+export async function enrichSubCategory(
+  verticalName: string,
+  subCategory: SubCategory,
+  strategyCanvasFactors: string[]
+): Promise<{ newPlayers: SubCategoryPlayer[]; updatedPlayers: SubCategoryPlayer[] }> {
+  const existingNames = subCategory.topPlayers.map((p) => p.name).join(", ")
+
+  const response = await callLLM(
+    SUBCATEGORY_ENRICH_PROMPT,
+    `VERTICAL: ${verticalName}
+
+SUB-CATEGORY: ${subCategory.name}
+DESCRIPTION: ${subCategory.description}
+KEY GAPS: ${subCategory.keyGaps.join("; ")}
+
+STRATEGY CANVAS FACTORS (use these exact factor names): ${strategyCanvasFactors.join(", ")}
+
+EXISTING PLAYERS (do NOT re-list these as new):
+${existingNames}
+
+Find additional players in this sub-category that are NOT in the existing list above.`,
+    "gemini-2.5-flash",
+    16384
+  )
+
   return JSON.parse(extractJSON(response))
 }

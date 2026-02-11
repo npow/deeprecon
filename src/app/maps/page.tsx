@@ -1,8 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { Radar, Map, Loader2, RefreshCw, ArrowRight, TrendingUp } from "lucide-react"
+import { TurboPopulateButton } from "@/components/maps/turbo-populate"
+import { useProviders } from "@/hooks/use-providers"
+import { ProviderPicker } from "@/components/maps/provider-picker"
+import { useRefreshJobs } from "@/hooks/use-refresh-jobs"
+import { RefreshJobsDrawer } from "@/components/maps/refresh-jobs-drawer"
 
 interface VerticalSummary {
   slug: string
@@ -20,32 +25,27 @@ interface VerticalSummary {
 export default function MapsPage() {
   const [verticals, setVerticals] = useState<VerticalSummary[]>([])
   const [loading, setLoading] = useState(true)
-  const [generating, setGenerating] = useState<string | null>(null)
+  const prov = useProviders()
 
-  useEffect(() => {
-    fetchVerticals()
-  }, [])
-
-  async function fetchVerticals() {
+  const fetchVerticals = useCallback(async () => {
     const res = await fetch("/api/maps")
     const data = await res.json()
     setVerticals(data.verticals)
     setLoading(false)
-  }
+  }, [])
 
-  async function handleGenerate(slug: string) {
-    setGenerating(slug)
-    try {
-      const res = await fetch(`/api/maps/${slug}`, { method: "POST" })
-      if (!res.ok) {
-        const err = await res.json()
-        alert(`Generation failed: ${err.error}`)
-        return
-      }
-      await fetchVerticals()
-    } finally {
-      setGenerating(null)
-    }
+  const refreshJobs = useRefreshJobs({
+    onComplete: () => fetchVerticals(),
+  })
+
+  const refreshVerticals = useCallback(() => fetchVerticals(), [fetchVerticals])
+
+  useEffect(() => {
+    fetchVerticals()
+  }, [fetchVerticals])
+
+  function handleGenerate(slug: string, name: string) {
+    refreshJobs.startRefresh(slug, name, Array.from(prov.enabledIds))
   }
 
   return (
@@ -86,7 +86,15 @@ export default function MapsPage() {
             Browse AI-generated landscape maps across startup verticals. See every player, funding
             signal, and white-space opportunity. Click any gap to deep-dive.
           </p>
+          <div className="mt-6">
+            <TurboPopulateButton onComplete={refreshVerticals} prov={prov} />
+          </div>
         </div>
+      </div>
+
+      {/* Provider picker (shared across turbo + per-card refresh) */}
+      <div className="max-w-5xl mx-auto w-full px-4 pt-6">
+        <ProviderPicker prov={prov} />
       </div>
 
       {/* Verticals grid */}
@@ -97,23 +105,30 @@ export default function MapsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {verticals.map((v) => (
-              <VerticalCard
-                key={v.slug}
-                vertical={v}
-                generating={generating === v.slug}
-                onGenerate={() => handleGenerate(v.slug)}
-              />
-            ))}
+            {verticals.map((v) => {
+              const job = refreshJobs.jobs.get(v.slug)
+              const generating = !!job && !job.done
+              return (
+                <VerticalCard
+                  key={v.slug}
+                  vertical={v}
+                  generating={generating}
+                  onGenerate={() => handleGenerate(v.slug, v.name)}
+                />
+              )
+            })}
           </div>
         )}
 
         <div className="mt-12 text-center">
           <p className="text-sm text-gray-400">
-            More verticals coming soon. Each landscape is AI-generated and takes ~30 seconds to compute.
+            More verticals coming soon. Each landscape is AI-generated and fans out across all enabled providers.
           </p>
         </div>
       </main>
+
+      {/* Refresh progress drawer */}
+      <RefreshJobsDrawer refreshJobs={refreshJobs} />
     </div>
   )
 }
@@ -131,11 +146,18 @@ function VerticalCard({
     "ai-ml": "🤖",
     fintech: "💳",
     devtools: "🛠️",
+    cybersecurity: "🛡️",
+    healthtech: "🏥",
+    "climate-tech": "🌍",
+    edtech: "🎓",
+    martech: "📣",
+    proptech: "🏠",
+    "hr-tech": "👥",
   }
 
   if (vertical.generated) {
     return (
-      <div className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow">
+      <div className={`bg-white border rounded-xl p-5 transition-shadow ${generating ? "border-brand-300 shadow-md ring-2 ring-brand-100" : "border-gray-200 hover:shadow-md"}`}>
         <div className="flex items-start justify-between mb-3">
           <div className="text-2xl">{icons[vertical.slug] || "📊"}</div>
           <span className="text-[10px] text-gray-400">
@@ -189,10 +211,10 @@ function VerticalCard({
             onClick={onGenerate}
             disabled={generating}
             className="inline-flex items-center justify-center p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-40"
-            title="Refresh landscape"
+            title="Refresh landscape (uses all enabled providers)"
           >
             {generating ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin text-brand-500" />
             ) : (
               <RefreshCw className="h-4 w-4" />
             )}
@@ -228,7 +250,7 @@ function VerticalCard({
       </button>
       {generating && (
         <p className="text-xs text-gray-400 mt-2 text-center">
-          This takes ~30 seconds
+          Fanning out to all enabled providers...
         </p>
       )}
     </div>

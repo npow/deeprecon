@@ -199,11 +199,19 @@ For each sub-category, provide:
 - playerCount: Approximate number of notable companies in this sub-category
 - totalFunding: Total funding raised by companies in this sub-category (e.g., "$2.4B")
 - trendDirection: "heating_up", "stable", or "cooling_down"
-- topPlayers: Array of 3 most notable companies, each with:
+- topPlayers: Array of ALL notable companies in this sub-category — include every relevant player you know: funded startups, bootstrapped companies, open-source projects, early-stage upstarts, and legacy incumbents. Each with:
   - name: Company name
   - oneLiner: What they do in one sentence
   - funding: Total funding raised (e.g., "$150M")
   - stage: Last funding stage (e.g., "Series C")
+  - executionScore: 0-100, how well the company executes (product quality, reliability, customer satisfaction, market share). For Magic Quadrant positioning.
+  - visionScore: 0-100, how forward-looking and innovative the company is (R&D, roadmap ambition, market vision). For Magic Quadrant positioning.
+  MAGIC QUADRANT SCORING — these scores place players into a 2x2 quadrant (midpoint=50). The scores must create a MEANINGFUL SPREAD so players appear in ALL FOUR quadrants — not just the top-right. Scoring guide:
+    - executionScore reflects real-world traction: revenue, customers, reliability, market share. A pre-revenue startup = 15-30. A growing startup with some customers = 30-50. A scaled company = 50-75. A dominant market leader = 75-90.
+    - visionScore reflects innovation and ambition: A copycat/incremental product = 15-35. A solid but conventional tool = 35-50. An innovative approach = 50-75. A category-defining visionary = 75-95.
+  Be HONEST — most companies are NOT leaders. Only the top 2-3 companies in each sub-category should have both scores above 50.
+  - competitiveFactors: Array of objects { factor: string, score: number (1-10) } — score this player on each of the shared strategyCanvasFactors (see below). Must use the SAME factor names as strategyCanvasFactors.
+- megaCategory: A high-level grouping for this sub-category (e.g., "AI & Automation", "Infrastructure", "Security"). Use 3-5 distinct mega-categories per vertical.
 - keyGaps: Array of 2-3 specific, exploitable gaps or opportunities in this sub-category
 - deepDivePrompt: A specific startup idea description (1-2 sentences) that exploits the biggest gap in this sub-category. This should be concrete enough to run through a competitive analysis tool.
 
@@ -218,16 +226,77 @@ IMPORTANT:
 - Order sub-categories by opportunity score (highest first)
 
 Also provide top-level vertical metadata:
+- schemaVersion: 2 (always set to 2)
 - totalPlayers: Total companies across all sub-categories
 - totalFunding: Total funding across the entire vertical
 - overallCrowdedness: Weighted average 0-100
 - averageOpportunity: Weighted average 0-100
+- megaCategories: Array of { name: string, color: string } for 3-5 mega-category groups. Colors should be distinct hex values (e.g., "#6366f1", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6").
+- strategyCanvasFactors: Array of 6-8 factor names that ALL players are scored on in their competitiveFactors arrays. Choose factors that reveal DIFFERENTIATION across the vertical (e.g., "Price", "Ease of Use", "Enterprise Features", "AI Capabilities", "Ecosystem/Integrations", "Speed/Performance", "Data Privacy", "Customization").
 
 Return valid JSON:
 {
+  "schemaVersion": 2,
   "totalPlayers": number,
   "totalFunding": "string",
   "overallCrowdedness": number,
   "averageOpportunity": number,
-  "subCategories": [<sub-category objects>]
+  "megaCategories": [{ "name": "string", "color": "#hexcolor" }],
+  "strategyCanvasFactors": ["string"],
+  "subCategories": [<sub-category objects with megaCategory, and topPlayers with executionScore, visionScore, competitiveFactors>]
+}`
+
+export const VERTICAL_DISCOVERY_PROMPT = `You are a senior venture capital analyst identifying investable startup verticals.
+
+Given a broad domain or the instruction to find ALL tech verticals, enumerate every meaningful startup vertical worth mapping.
+
+For each vertical provide:
+- slug: URL-friendly identifier (lowercase, hyphens only, e.g., "ai-ml", "fintech", "devtools")
+- name: Human-readable name (e.g., "AI & Machine Learning")
+- description: One sentence describing what this vertical covers
+
+IMPORTANT:
+- Be comprehensive — include both obvious and emerging verticals
+- Each vertical should be distinct enough to warrant its own landscape map
+- Include at least 15-25 verticals
+- Cover: infrastructure, enterprise SaaS, consumer, deep tech, regulated industries, vertical SaaS
+- Do NOT include verticals that are too broad (e.g., "Technology") or too narrow (e.g., "AI for pet grooming")
+- Order by market size / investment activity (biggest first)
+
+Return valid JSON:
+{
+  "verticals": [{ "slug": "string", "name": "string", "description": "string" }]
+}`
+
+export const SUBCATEGORY_ENRICH_PROMPT = `You are a senior market analyst performing deep enrichment on a specific sub-category within a startup vertical landscape map.
+
+You are given:
+- The vertical name and sub-category context (name, description, key gaps)
+- The list of strategy canvas factors used across the vertical
+- The EXISTING players already catalogued
+
+Your job:
+1. Find NEW players NOT already listed — dig deeper for: bootstrapped startups, open-source projects, early-stage companies, legacy incumbents pivoting into this space, international players, and niche tools.
+2. If any existing player's data seems wrong or incomplete, provide updated data.
+
+For each new player, provide the SAME schema as existing players:
+- name: Company name
+- oneLiner: What they do in one sentence
+- funding: Total funding raised (e.g., "$5M", "Bootstrapped", "$150M")
+- stage: Last funding stage (e.g., "Seed", "Series A", "Bootstrapped", "IPO")
+- executionScore: 0-100 (see Magic Quadrant scoring rules — be honest, most startups are NOT leaders)
+- visionScore: 0-100 (see Magic Quadrant scoring rules)
+- competitiveFactors: Array of { factor: string, score: number (1-10) } matching the provided strategy canvas factors EXACTLY
+
+IMPORTANT:
+- Do NOT re-list existing players as "new" — they are already in the database
+- Only include a player in "updatedPlayers" if you have materially better data (e.g., new funding round, corrected score)
+- Aim for 5-15 genuinely new players per sub-category
+- Include the FULL breadth: funded startups, bootstrapped tools, open-source, legacy players
+- Be accurate — don't invent companies that don't exist
+
+Return valid JSON:
+{
+  "newPlayers": [<player objects>],
+  "updatedPlayers": [<player objects with name matching existing>]
 }`

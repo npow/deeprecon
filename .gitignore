@@ -23,11 +23,11 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-.env*.local
 .env
+.env*.local
 
-# generated map data
-/data/maps/
+# runtime data (generated maps, verticals, etc.)
+/data/
 
 # vercel
 .vercel
@@ -35,3 +35,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# IDE
+.vscode/
+.idea/

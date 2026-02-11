@@ -57,3 +57,18 @@ export function crowdednessBgColor(index: string): string {
     default: return "bg-gray-100 border-gray-300"
   }
 }
+
+/** Parse funding strings like "$3.8B", "$150M", "$2.4K" into numbers */
+export function parseFundingString(str: string | undefined | null): number {
+  if (!str) return 0
+  const cleaned = str.replace(/[^0-9.BMKbmk]/g, "")
+  const match = cleaned.match(/^([\d.]+)\s*([BMKbmk])?/)
+  if (!match) return 0
+  const num = parseFloat(match[1])
+  if (isNaN(num)) return 0
+  const suffix = (match[2] || "").toUpperCase()
+  if (suffix === "B") return num * 1_000_000_000
+  if (suffix === "M") return num * 1_000_000
+  if (suffix === "K") return num * 1_000
+  return num
+}

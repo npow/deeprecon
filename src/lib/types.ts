@@ -159,6 +159,9 @@ export interface SubCategoryPlayer {
   oneLiner: string
   funding: string
   stage: string
+  executionScore: number   // 0-100, for Magic Quadrant
+  visionScore: number      // 0-100, for Magic Quadrant
+  competitiveFactors: { factor: string; score: number }[]  // 1-10, for Strategy Canvas
 }
 
 export interface SubCategory {
@@ -173,6 +176,13 @@ export interface SubCategory {
   topPlayers: SubCategoryPlayer[]
   keyGaps: string[]
   deepDivePrompt: string
+  megaCategory: string  // grouping label, e.g. "AI & Automation"
+  lastEnrichedAt?: string
+}
+
+export interface MegaCategoryDef {
+  name: string
+  color: string
 }
 
 export interface VerticalMap {
@@ -185,6 +195,10 @@ export interface VerticalMap {
   overallCrowdedness: number // 0-100
   averageOpportunity: number // 0-100
   subCategories: SubCategory[]
+  schemaVersion: number
+  megaCategories: MegaCategoryDef[]
+  strategyCanvasFactors: string[]  // shared factor names
+  lastEnrichedAt?: string
 }
 
 export interface VerticalDefinition {
@@ -197,6 +211,13 @@ export const VERTICALS: VerticalDefinition[] = [
   { slug: "ai-ml", name: "AI & Machine Learning", description: "AI infrastructure, applications, and tooling across all industries" },
   { slug: "fintech", name: "Fintech", description: "Financial technology including payments, banking, lending, insurance, and crypto" },
   { slug: "devtools", name: "Developer Tools", description: "Tools, platforms, and infrastructure for software developers" },
+  { slug: "cybersecurity", name: "Cybersecurity", description: "Security tools, platforms, and services for threat detection, prevention, and response" },
+  { slug: "healthtech", name: "Healthtech", description: "Digital health, telemedicine, clinical tools, biotech platforms, and health data infrastructure" },
+  { slug: "climate-tech", name: "Climate Tech", description: "Carbon capture, clean energy, sustainability software, and environmental monitoring" },
+  { slug: "edtech", name: "Edtech", description: "Learning platforms, ed-AI, credentialing, upskilling, and knowledge management tools" },
+  { slug: "martech", name: "Martech", description: "Marketing technology including analytics, automation, CRM, ad-tech, and content tools" },
+  { slug: "proptech", name: "Proptech", description: "Real estate technology for buying, selling, managing, and financing properties" },
+  { slug: "hr-tech", name: "HR Tech", description: "Recruiting, workforce management, payroll, benefits, and employee engagement platforms" },
 ]
 
 // SSE event types
@@ -211,3 +232,10 @@ export type ScanEvent =
   | { type: "scan_complete"; data: { id: string } }
   | { type: "scan_error"; data: { message: string } }
   | { type: "status_update"; data: { stage: string; message: string } }
+
+// Enrichment SSE events
+export type EnrichEvent =
+  | { type: "enrich_start"; data: { subSlug: string; subName: string; index: number; total: number } }
+  | { type: "enrich_complete"; data: { subSlug: string; newCount: number; updatedCount: number } }
+  | { type: "enrich_done"; data: { totalNew: number; totalUpdated: number } }
+  | { type: "enrich_error"; data: { message: string; subSlug?: string } }

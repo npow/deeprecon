@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
 import {
@@ -8,16 +8,21 @@ import {
   Map,
   Loader2,
   RefreshCw,
-  ArrowRight,
   ArrowLeft,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  Search,
-  Flame,
+  Sparkles,
 } from "lucide-react"
 import { stringify } from "@/lib/utils"
-import { type VerticalMap, type SubCategory } from "@/lib/types"
+import { type VerticalMap } from "@/lib/types"
+import { MapViewTabs } from "@/components/maps/view-tabs"
+import {
+  EnrichProgressBanner,
+  INITIAL_ENRICH_STATE,
+  type EnrichProgressState,
+} from "@/components/maps/enrich-progress"
+import { useProviders } from "@/hooks/use-providers"
+import { ProviderPicker } from "@/components/maps/provider-picker"
+import { useRefreshJobs } from "@/hooks/use-refresh-jobs"
+import { RefreshJobsDrawer } from "@/components/maps/refresh-jobs-drawer"
 
 export default function VerticalDetailPage() {
   const params = useParams()
@@ -26,13 +31,10 @@ export default function VerticalDetailPage() {
   const [map, setMap] = useState<VerticalMap | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [refreshing, setRefreshing] = useState(false)
+  const [enrichState, setEnrichState] = useState<EnrichProgressState>(INITIAL_ENRICH_STATE)
+  const prov = useProviders()
 
-  useEffect(() => {
-    fetchMap()
-  }, [slug])
-
-  async function fetchMap() {
+  const fetchMap = useCallback(async () => {
     setLoading(true)
     setError("")
     const res = await fetch(`/api/maps/${slug}`)
@@ -44,18 +46,115 @@ export default function VerticalDetailPage() {
     const data = await res.json()
     setMap(data)
     setLoading(false)
+  }, [slug])
+
+  const refreshJobs = useRefreshJobs({
+    onComplete: () => fetchMap(),
+  })
+
+  useEffect(() => {
+    fetchMap()
+  }, [fetchMap])
+
+  const refreshJob = refreshJobs.jobs.get(slug)
+  const refreshing = !!refreshJob && !refreshJob.done
+
+  function handleRefresh() {
+    if (map) {
+      refreshJobs.startRefresh(slug, map.name, Array.from(prov.enabledIds))
+    }
   }
 
-  async function handleRefresh() {
-    setRefreshing(true)
+  async function handleEnrichAll() {
+    setEnrichState({ ...INITIAL_ENRICH_STATE, running: true })
+
     try {
-      const res = await fetch(`/api/maps/${slug}`, { method: "POST" })
-      if (res.ok) {
-        const data = await res.json()
-        setMap(data)
+      const res = await fetch(`/api/maps/${slug}/enrich`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          providers: Array.from(prov.enabledIds),
+        }),
+      })
+
+      if (!res.ok) {
+        const err = await res.json()
+        setEnrichState((s) => ({ ...s, running: false, error: err.error || "Failed to start enrichment" }))
+        return
       }
-    } finally {
-      setRefreshing(false)
+
+      const reader = res.body?.getReader()
+      if (!reader) return
+
+      const decoder = new TextDecoder()
+      let buffer = ""
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split("\n")
+        buffer = lines.pop() || ""
+
+        let eventType = ""
+        for (const line of lines) {
+          if (line.startsWith("event: ")) {
+            eventType = line.slice(7)
+          } else if (line.startsWith("data: ") && eventType) {
+            try {
+              const data = JSON.parse(line.slice(6))
+              switch (eventType) {
+                case "enrich_start":
+                  setEnrichState((s) => ({
+                    ...s,
+                    currentSub: data.subName,
+                    index: data.index,
+                    total: data.total,
+                  }))
+                  break
+                case "enrich_complete":
+                  setEnrichState((s) => ({
+                    ...s,
+                    totalNew: s.totalNew + data.newCount,
+                    totalUpdated: s.totalUpdated + data.updatedCount,
+                  }))
+                  break
+                case "enrich_done":
+                  setEnrichState((s) => ({
+                    ...s,
+                    running: false,
+                    done: true,
+                    totalNew: data.totalNew,
+                    totalUpdated: data.totalUpdated,
+                  }))
+                  fetchMap()
+                  break
+                case "enrich_error":
+                  if (data.subSlug) {
+                    // Per-subcategory error, continue
+                    break
+                  }
+                  setEnrichState((s) => ({
+                    ...s,
+                    running: false,
+                    error: data.message,
+                  }))
+                  break
+              }
+            } catch {
+              // skip malformed JSON
+            }
+            eventType = ""
+          }
+        }
+      }
+    } catch (err) {
+      setEnrichState((s) => ({
+        ...s,
+        running: false,
+        error: err instanceof Error ? err.message : "Network error",
+      }))
     }
   }
 
@@ -120,18 +219,32 @@ export default function VerticalDetailPage() {
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{map.name}</h1>
               <p className="text-gray-500 mt-1">{map.description}</p>
             </div>
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 bg-white border border-gray-200 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40"
-            >
-              {refreshing ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <RefreshCw className="h-3.5 w-3.5" />
-              )}
-              Refresh
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleEnrichAll}
+                disabled={enrichState.running || refreshing || prov.enabledCount === 0}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40"
+              >
+                {enrichState.running ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5" />
+                )}
+                Enrich All
+              </button>
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing || enrichState.running || prov.enabledCount === 0}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 bg-white border border-gray-200 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40"
+              >
+                {refreshing ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3.5 w-3.5" />
+                )}
+                Refresh
+              </button>
+            </div>
           </div>
 
           {/* Stats row */}
@@ -169,24 +282,22 @@ export default function VerticalDetailPage() {
               value={new Date(map.generatedAt).toLocaleDateString()}
             />
           </div>
+
+          {/* Provider picker */}
+          <div className="mt-6">
+            <ProviderPicker prov={prov} />
+          </div>
         </div>
       </div>
 
-      {/* Sub-categories */}
+      {/* Views */}
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Sub-Categories
-            <span className="text-sm font-normal text-gray-400 ml-2">sorted by opportunity</span>
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {map.subCategories.map((sub, i) => (
-            <SubCategoryCard key={sub.slug || i} sub={sub} index={i} />
-          ))}
-        </div>
+        <EnrichProgressBanner state={enrichState} />
+        <MapViewTabs map={map} />
       </main>
+
+      {/* Refresh progress drawer */}
+      <RefreshJobsDrawer refreshJobs={refreshJobs} />
     </div>
   )
 }
@@ -204,125 +315,6 @@ function Stat({
     <div className="bg-white border border-gray-200 rounded-lg px-4 py-2">
       <div className="text-[10px] text-gray-400 uppercase tracking-wider">{label}</div>
       <div className={`text-sm font-bold ${color || "text-gray-900"}`}>{value}</div>
-    </div>
-  )
-}
-
-function SubCategoryCard({ sub, index }: { sub: SubCategory; index: number }) {
-  const trendIcon =
-    sub.trendDirection === "heating_up" ? (
-      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full">
-        <Flame className="h-3 w-3" /> Heating Up
-      </span>
-    ) : sub.trendDirection === "cooling_down" ? (
-      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-        <TrendingDown className="h-3 w-3" /> Cooling
-      </span>
-    ) : (
-      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-gray-500 bg-gray-50 px-2 py-0.5 rounded-full">
-        <Minus className="h-3 w-3" /> Stable
-      </span>
-    )
-
-  const opportunityColor =
-    sub.opportunityScore >= 70
-      ? "text-green-600"
-      : sub.opportunityScore >= 45
-        ? "text-yellow-600"
-        : "text-gray-500"
-
-  return (
-    <div
-      className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow animate-slide-up"
-      style={{ animationDelay: `${index * 40}ms` }}
-    >
-      {/* Header */}
-      <div className="flex items-start justify-between mb-2">
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900">{stringify(sub.name)}</h3>
-          <p className="text-xs text-gray-500 mt-0.5">{stringify(sub.description)}</p>
-        </div>
-        <div className="flex-shrink-0 ml-3 text-right">
-          <div className={`text-xl font-bold ${opportunityColor}`}>
-            {sub.opportunityScore}
-          </div>
-          <div className="text-[9px] text-gray-400 uppercase tracking-wider">opportunity</div>
-        </div>
-      </div>
-
-      {/* Scores */}
-      <div className="flex items-center gap-4 mb-3">
-        <div className="flex-1">
-          <div className="flex items-center justify-between mb-0.5">
-            <span className="text-[10px] text-gray-400">Crowdedness</span>
-            <span className="text-[10px] font-medium text-gray-600">{sub.crowdednessScore}</span>
-          </div>
-          <div className="bg-gray-100 rounded-full h-1.5">
-            <div
-              className={`h-1.5 rounded-full ${
-                sub.crowdednessScore >= 70 ? "bg-red-400" : sub.crowdednessScore >= 40 ? "bg-orange-300" : "bg-green-400"
-              }`}
-              style={{ width: `${sub.crowdednessScore}%` }}
-            />
-          </div>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {trendIcon}
-          <span className="text-xs text-gray-400">{sub.playerCount} players</span>
-          {sub.totalFunding && (
-            <span className="text-xs text-gray-400">{stringify(sub.totalFunding)}</span>
-          )}
-        </div>
-      </div>
-
-      {/* Top players */}
-      {Array.isArray(sub.topPlayers) && sub.topPlayers.length > 0 && (
-        <div className="mb-3">
-          <div className="text-[10px] uppercase tracking-wider text-gray-400 font-medium mb-1">
-            Top Players
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {sub.topPlayers.map((p, i) => (
-              <span
-                key={i}
-                className="text-[11px] bg-gray-50 text-gray-700 px-2 py-0.5 rounded-full border border-gray-100"
-                title={`${stringify(p.oneLiner)} | ${stringify(p.funding)} (${stringify(p.stage)})`}
-              >
-                {stringify(p.name)}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Gaps */}
-      {Array.isArray(sub.keyGaps) && sub.keyGaps.length > 0 && (
-        <div className="mb-3">
-          <div className="text-[10px] uppercase tracking-wider text-gray-400 font-medium mb-1">
-            Key Gaps
-          </div>
-          <ul className="space-y-0.5">
-            {sub.keyGaps.map((gap, i) => (
-              <li key={i} className="text-xs text-gray-600 flex items-start gap-1.5">
-                <span className="text-green-500 mt-0.5 flex-shrink-0">●</span>
-                {stringify(gap)}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Deep dive */}
-      {sub.deepDivePrompt && (
-        <Link
-          href={`/?idea=${encodeURIComponent(stringify(sub.deepDivePrompt))}`}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-lg transition-colors mt-1"
-        >
-          <Search className="h-3 w-3" />
-          Deep Dive
-          <ArrowRight className="h-3 w-3" />
-        </Link>
-      )}
     </div>
   )
 }
