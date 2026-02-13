@@ -80,9 +80,9 @@ export function LandscapeView({ map }: { map: VerticalMap }) {
                     </div>
                   </div>
 
-                  {/* Player chips */}
+                  {/* Player chips — show top 20, link to detail for all */}
                   <div className="flex flex-wrap gap-1 mt-2">
-                    {sub.topPlayers.map((p, i) => (
+                    {sub.topPlayers.slice(0, 20).map((p, i) => (
                       <span
                         key={i}
                         className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded"
@@ -91,9 +91,9 @@ export function LandscapeView({ map }: { map: VerticalMap }) {
                         {stringify(p.name)}
                       </span>
                     ))}
-                    {sub.playerCount > sub.topPlayers.length && (
+                    {sub.topPlayers.length > 20 && (
                       <span className="text-[10px] text-gray-400 px-1 py-0.5">
-                        +{sub.playerCount - sub.topPlayers.length}
+                        +{sub.topPlayers.length - 20} more
                       </span>
                     )}
                   </div>

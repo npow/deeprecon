@@ -112,7 +112,7 @@ function SubCategoryCard({ sub, index, verticalSlug }: { sub: SubCategory; index
             Top Players
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {sub.topPlayers.map((p, i) => (
+            {sub.topPlayers.slice(0, 20).map((p, i) => (
               <span
                 key={i}
                 className="text-[11px] bg-gray-50 text-gray-700 px-2 py-0.5 rounded-full border border-gray-100"
@@ -121,6 +121,11 @@ function SubCategoryCard({ sub, index, verticalSlug }: { sub: SubCategory; index
                 {stringify(p.name)}
               </span>
             ))}
+            {sub.topPlayers.length > 20 && (
+              <span className="text-[11px] text-gray-400 px-2 py-0.5">
+                +{sub.topPlayers.length - 20} more
+              </span>
+            )}
           </div>
         </div>
       )}

@@ -68,14 +68,18 @@ function prepareData(map: VerticalMap): QuadrantDot[] {
   const colorMap = new Map<string, string>()
   megaNames.forEach((name, i) => colorMap.set(name, CATEGORY_PALETTE[i % CATEGORY_PALETTE.length]))
 
-  // Collect raw data
+  // Collect raw data — pick top 10 per subcategory by execution+vision to keep chart readable
+  const MAX_PER_SUB = 10
   const raw: { name: string; exec: number; vision: number; funding: string; oneLiner: string; mega: string }[] = []
   for (const sub of map.subCategories) {
-    for (const p of sub.topPlayers) {
+    const sorted = [...sub.topPlayers]
+      .sort((a, b) => ((b.executionScore ?? 0) + (b.visionScore ?? 0)) - ((a.executionScore ?? 0) + (a.visionScore ?? 0)))
+      .slice(0, MAX_PER_SUB)
+    for (const p of sorted) {
       raw.push({
         name: stringify(p.name),
-        exec: p.executionScore,
-        vision: p.visionScore,
+        exec: p.executionScore ?? 50,
+        vision: p.visionScore ?? 50,
         funding: stringify(p.funding),
         oneLiner: stringify(p.oneLiner),
         mega: sub.megaCategory,

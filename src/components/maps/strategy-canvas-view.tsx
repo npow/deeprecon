@@ -49,7 +49,7 @@ function prepareData(map: VerticalMap): { players: PlayerLine[]; chartData: Char
   // Build player lines
   const playerLines: PlayerLine[] = topPlayers.map((p, i) => {
     const scoreMap = new Map<string, number>()
-    for (const cf of p.competitiveFactors) {
+    for (const cf of p.competitiveFactors || []) {
       scoreMap.set(stringify(cf.factor), cf.score)
     }
     return {
