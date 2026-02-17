@@ -13,6 +13,7 @@ import {
 } from "recharts"
 import { type VerticalMap, type SubCategoryPlayer } from "@/lib/types"
 import { stringify, parseFundingString, cn } from "@/lib/utils"
+import { CompanyIcon } from "@/components/maps/company-icon"
 
 const LINE_COLORS = ["#6366f1", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6", "#06b6d4", "#ec4899", "#84cc16"]
 
@@ -21,6 +22,8 @@ interface PlayerLine {
   funding: number
   scores: Map<string, number>
   color: string
+  websiteUrl?: string
+  logoUrl?: string
 }
 
 interface ChartPoint {
@@ -57,6 +60,8 @@ function prepareData(map: VerticalMap): { players: PlayerLine[]; chartData: Char
       funding: parseFundingString(p.funding),
       scores: scoreMap,
       color: LINE_COLORS[i % LINE_COLORS.length],
+      websiteUrl: p.websiteUrl,
+      logoUrl: p.logoUrl,
     }
   })
 
@@ -174,6 +179,7 @@ export function StrategyCanvasView({ map }: { map: VerticalMap }) {
               onClick={() => setHighlightedPlayer(highlightedPlayer === pl.name ? null : pl.name)}
             >
               <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: pl.color }} />
+              <CompanyIcon name={pl.name} websiteUrl={pl.websiteUrl} logoUrl={pl.logoUrl} size={14} />
               {pl.name}
             </button>
           ))}

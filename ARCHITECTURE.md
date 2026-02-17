@@ -9,6 +9,7 @@ Owner: Platform
 - Domain logic: `src/lib`.
 - Operational scripts: `scripts`.
 - Contracts and process docs: `docs`.
+- Persistence normalization: `saveMap` and `saveScan` must persist `logoUrl` for players/competitors when a `websiteUrl` exists.
 
 ## Layer Contracts
 - `src/components` may not import from `src/app/api` or `scripts`.

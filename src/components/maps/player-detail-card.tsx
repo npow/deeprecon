@@ -5,6 +5,7 @@ import { type SubCategoryPlayer } from "@/lib/types"
 import { ExternalLink } from "lucide-react"
 import { WebsiteStatusBadge } from "@/components/website-status-badge"
 import { SourceConfidenceBadge } from "@/components/source-confidence-badge"
+import { CompanyIcon } from "@/components/maps/company-icon"
 
 export const stageBadgeColor: Record<string, string> = {
   "Pre-Seed": "bg-gray-100 text-gray-600",
@@ -62,6 +63,12 @@ export function PlayerDetailCard({
       <div className="flex items-start justify-between mb-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
+            <CompanyIcon
+              name={stringify(player.name)}
+              websiteUrl={player.websiteUrl}
+              logoUrl={player.logoUrl}
+              size={18}
+            />
             <h4 className="font-semibold text-gray-900 text-sm">{stringify(player.name)}</h4>
             {player.websiteUrl && (
               <a

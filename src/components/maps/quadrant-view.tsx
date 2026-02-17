@@ -14,6 +14,7 @@ import {
 } from "recharts"
 import { type VerticalMap } from "@/lib/types"
 import { stringify } from "@/lib/utils"
+import { CompanyIcon } from "@/components/maps/company-icon"
 
 // 20 visually distinct colors — max perceptual distance, colorblind-safe ordering
 const CATEGORY_PALETTE = [
@@ -47,6 +48,8 @@ interface QuadrantDot {
   oneLiner: string
   megaCategory: string
   color: string
+  websiteUrl?: string
+  logoUrl?: string
 }
 
 /** Normalize scores so median=50 and values spread across 5-95 range */
@@ -70,7 +73,16 @@ function prepareData(map: VerticalMap): QuadrantDot[] {
 
   // Collect raw data — pick top 10 per subcategory by execution+vision to keep chart readable
   const MAX_PER_SUB = 10
-  const raw: { name: string; exec: number; vision: number; funding: string; oneLiner: string; mega: string }[] = []
+  const raw: {
+    name: string
+    exec: number
+    vision: number
+    funding: string
+    oneLiner: string
+    mega: string
+    websiteUrl?: string
+    logoUrl?: string
+  }[] = []
   for (const sub of map.subCategories) {
     const sorted = [...sub.topPlayers]
       .sort((a, b) => ((b.executionScore ?? 0) + (b.visionScore ?? 0)) - ((a.executionScore ?? 0) + (a.visionScore ?? 0)))
@@ -83,6 +95,8 @@ function prepareData(map: VerticalMap): QuadrantDot[] {
         funding: stringify(p.funding),
         oneLiner: stringify(p.oneLiner),
         mega: sub.megaCategory,
+        websiteUrl: p.websiteUrl,
+        logoUrl: p.logoUrl,
       })
     }
   }
@@ -99,6 +113,8 @@ function prepareData(map: VerticalMap): QuadrantDot[] {
     oneLiner: r.oneLiner,
     megaCategory: r.mega,
     color: colorMap.get(r.mega) || "#6366f1",
+    websiteUrl: r.websiteUrl,
+    logoUrl: r.logoUrl,
   }))
 }
 
@@ -107,7 +123,10 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<
   const d = payload[0].payload
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-xs max-w-[240px]">
-      <div className="font-semibold text-gray-900 mb-1">{d.name}</div>
+      <div className="flex items-center gap-1.5 mb-1">
+        <CompanyIcon name={d.name} websiteUrl={d.websiteUrl} logoUrl={d.logoUrl} size={16} />
+        <div className="font-semibold text-gray-900">{d.name}</div>
+      </div>
       <p className="text-gray-500 mb-1.5 line-clamp-2">{d.oneLiner}</p>
       <div className="space-y-0.5 text-gray-600">
         <div>Execution: <span className="font-medium">{d.execution}</span></div>

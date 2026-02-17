@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { stringify } from "@/lib/utils"
 import { type VerticalMap, type SubCategory, type MegaCategoryDef } from "@/lib/types"
+import { CompanyIcon } from "@/components/maps/company-icon"
 
 interface MegaGroup {
   name: string
@@ -36,7 +37,7 @@ export function LandscapeView({ map }: { map: VerticalMap }) {
       <div className="mb-4">
         <h2 className="text-lg font-semibold text-gray-900">Landscape Map</h2>
         <p className="text-xs text-gray-500 mt-0.5">
-          Market landscape grouped by mega-categories. Companies shown as chips within each sub-category.
+          Dense market landscape grouped by mega-categories. Company chips include icons for faster visual scanning.
         </p>
       </div>
 
@@ -80,20 +81,26 @@ export function LandscapeView({ map }: { map: VerticalMap }) {
                     </div>
                   </div>
 
-                  {/* Player chips — show top 20, link to detail for all */}
+                  {/* Dense icon chips — show top 60 for high-density map view */}
                   <div className="flex flex-wrap gap-1 mt-2">
-                    {sub.topPlayers.slice(0, 20).map((p, i) => (
+                    {sub.topPlayers.slice(0, 60).map((p, i) => (
                       <span
                         key={i}
-                        className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded"
+                        className="inline-flex items-center gap-1 text-[10px] bg-white text-gray-700 px-1.5 py-0.5 rounded-md border border-gray-200"
                         title={stringify(p.oneLiner)}
                       >
-                        {stringify(p.name)}
+                        <CompanyIcon
+                          name={stringify(p.name)}
+                          websiteUrl={p.websiteUrl}
+                          logoUrl={p.logoUrl}
+                          size={14}
+                        />
+                        <span className="max-w-[120px] truncate">{stringify(p.name)}</span>
                       </span>
                     ))}
-                    {sub.topPlayers.length > 20 && (
+                    {sub.topPlayers.length > 60 && (
                       <span className="text-[10px] text-gray-400 px-1 py-0.5">
-                        +{sub.topPlayers.length - 20} more
+                        +{sub.topPlayers.length - 60} more
                       </span>
                     )}
                   </div>
