@@ -42,6 +42,8 @@ DeepRecon is an AI-powered competitive intelligence platform that helps startup 
 
 - **5-stage pipeline**: intent extraction → competitive analysis → gap analysis → DD report → pivot suggestions
 - Full DD report covering ICP, problem severity, wedge strategy, TAM/SAM/SOM, business model, defensibility, and GTM
+- Multi-layer scoring: **Readiness**, **Lucrativeness**, **Validation**, and blended **Opportunity** score
+- Validation gating: pass/watch/fail guardrails for distribution access, buyer budget fit, evidence quality, and live demand signals
 - Configurable depth (quick/standard/deep) and competitor count
 - Markdown export (copy or download)
 

@@ -225,6 +225,11 @@ export default function ScanDetailPage() {
             evidenceConfidence={evidenceConfidence.score}
             lucrativenessScore={scan.lucrativenessScore?.total ?? null}
             lucrativenessTier={scan.lucrativenessScore?.tier ?? null}
+            validationScore={scan.validationScore?.total ?? null}
+            validationTier={scan.validationScore?.tier ?? null}
+            validationGate={scan.validationScore?.gate.status ?? null}
+            opportunityScore={scan.opportunityScore?.total ?? null}
+            opportunityTier={scan.opportunityScore?.tier ?? null}
           />
         )}
 

@@ -1,6 +1,8 @@
 import type { SavedScan, SavedScanSummary } from "./types"
 import { computeReadinessScore } from "./readiness-score"
 import { computeLucrativenessScore } from "./lucrativeness-score"
+import { computeValidationScore } from "./validation-score"
+import { computeOpportunityScore } from "./opportunity-score"
 import { applyLogosToCompetitors } from "./company-logo"
 import { ensureDbSchema, getPool } from "./db"
 
@@ -56,6 +58,20 @@ export async function listScans(): Promise<SavedScanSummary[]> {
           raw.gapAnalysis ?? null,
         )
       : raw.lucrativenessScore
+    const recomputedValidation = raw.ddReport
+      ? computeValidationScore(
+          raw.ddReport,
+          raw.competitors,
+          raw.gapAnalysis ?? null,
+        )
+      : raw.validationScore
+    const recomputedOpportunity = (recomputed && recomputedLucrativeness && recomputedValidation)
+      ? computeOpportunityScore(
+          recomputed.total,
+          recomputedLucrativeness.total,
+          recomputedValidation,
+        )
+      : raw.opportunityScore
     const uniquenessScore = (recomputed?.breakdown || []).find((item) => item.factor === "Uniqueness")?.score
     summaries.push({
       id: raw.id,
@@ -67,6 +83,10 @@ export async function listScans(): Promise<SavedScanSummary[]> {
       uniquenessScore,
       lucrativenessScore: recomputedLucrativeness?.total,
       lucrativenessTier: recomputedLucrativeness?.tier,
+      validationScore: recomputedValidation?.total,
+      validationTier: recomputedValidation?.tier,
+      opportunityScore: recomputedOpportunity?.total,
+      opportunityTier: recomputedOpportunity?.tier,
       crowdednessIndex: raw.crowdednessIndex ?? "",
       parentScanId: raw.parentScanId,
       rootScanId: raw.rootScanId,

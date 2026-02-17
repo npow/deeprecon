@@ -10,12 +10,14 @@ import {
   gradeColor,
   remixTypeLabel,
   lucrativenessBadgeColor,
+  validationBadgeColor,
+  opportunityBadgeColor,
   relativeTime,
   ScoreCircle,
 } from "@/components/scans/scan-feed-ui"
 
 type FeedView = "cards" | "threads"
-type SortObjective = "latest" | "highest_score" | "highest_uniqueness" | "most_lucrative" | "fastest_to_mvp"
+type SortObjective = "latest" | "highest_score" | "highest_uniqueness" | "most_lucrative" | "highest_validation" | "highest_opportunity" | "fastest_to_mvp"
 
 interface ThreadNode {
   scan: SavedScanSummary
@@ -78,6 +80,16 @@ function ThreadScanCard({
                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${lucrativenessBadgeColor(scan.lucrativenessTier)}`}>
                   ${" "}
                   L{scan.lucrativenessScore}
+                </span>
+              )}
+              {typeof scan.validationScore === "number" && (
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${validationBadgeColor(scan.validationTier)}`}>
+                  V{scan.validationScore}
+                </span>
+              )}
+              {typeof scan.opportunityScore === "number" && (
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${opportunityBadgeColor(scan.opportunityTier)}`}>
+                  O{scan.opportunityScore}
                 </span>
               )}
               {remixLabel && (
@@ -304,6 +316,12 @@ export default function ScansPage() {
     if (objective === "most_lucrative") {
       return out.sort((a, b) => (b.lucrativenessScore || 0) - (a.lucrativenessScore || 0) || b.score - a.score)
     }
+    if (objective === "highest_validation") {
+      return out.sort((a, b) => (b.validationScore || 0) - (a.validationScore || 0) || b.score - a.score)
+    }
+    if (objective === "highest_opportunity") {
+      return out.sort((a, b) => (b.opportunityScore || 0) - (a.opportunityScore || 0) || b.score - a.score)
+    }
     if (objective === "fastest_to_mvp") {
       const mvpPenalty = (s: SavedScanSummary) => {
         if (s.crowdednessIndex === "low") return 0
@@ -326,6 +344,8 @@ export default function ScansPage() {
       if (objective === "highest_score") return bs.score - as.score
       if (objective === "highest_uniqueness") return (bs.uniquenessScore || 0) - (as.uniquenessScore || 0) || bs.score - as.score
       if (objective === "most_lucrative") return (bs.lucrativenessScore || 0) - (as.lucrativenessScore || 0) || bs.score - as.score
+      if (objective === "highest_validation") return (bs.validationScore || 0) - (as.validationScore || 0) || bs.score - as.score
+      if (objective === "highest_opportunity") return (bs.opportunityScore || 0) - (as.opportunityScore || 0) || bs.score - as.score
       const mvpPenalty = (s: SavedScanSummary) => (s.crowdednessIndex === "low" ? 0 : s.crowdednessIndex === "moderate" ? 4 : s.crowdednessIndex === "high" ? 8 : 12)
       return (bs.score - mvpPenalty(bs)) - (as.score - mvpPenalty(as))
     })
@@ -396,6 +416,18 @@ export default function ScansPage() {
                 className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium ${objective === "most_lucrative" ? "bg-brand-50 text-brand-700" : "text-gray-600 hover:text-gray-800"}`}
               >
                 Lucrative
+              </button>
+              <button
+                onClick={() => setObjective("highest_validation")}
+                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium ${objective === "highest_validation" ? "bg-brand-50 text-brand-700" : "text-gray-600 hover:text-gray-800"}`}
+              >
+                Validation
+              </button>
+              <button
+                onClick={() => setObjective("highest_opportunity")}
+                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium ${objective === "highest_opportunity" ? "bg-brand-50 text-brand-700" : "text-gray-600 hover:text-gray-800"}`}
+              >
+                Opportunity
               </button>
               <button
                 onClick={() => setObjective("fastest_to_mvp")}

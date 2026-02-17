@@ -13,6 +13,8 @@ import { getRateLimiter, getScanQueue } from "@/lib/rate-limit"
 import { loadScan, saveScan } from "@/lib/scans-store"
 import { computeReadinessScore } from "@/lib/readiness-score"
 import { computeLucrativenessScore } from "@/lib/lucrativeness-score"
+import { computeValidationScore } from "@/lib/validation-score"
+import { computeOpportunityScore } from "@/lib/opportunity-score"
 import { runWithScanContext, timed } from "@/lib/telemetry"
 import { saveScanJob, updateScanJob } from "@/lib/scan-jobs-store"
 
@@ -151,6 +153,12 @@ async function executeScanRun(input: ScanRunInput): Promise<string> {
       await timed("scan.stage.persist", "stage", { stage: "persist" }, async () => {
         const readinessScore = computeReadinessScore(ddReport, crowdednessIndex, competitors, gapAnalysis, idea)
         const lucrativenessScore = computeLucrativenessScore(ddReport, competitors, gapAnalysis)
+        const validationScore = computeValidationScore(ddReport, competitors, gapAnalysis)
+        const opportunityScore = computeOpportunityScore(
+          readinessScore.total,
+          lucrativenessScore.total,
+          validationScore
+        )
         const parentScan = remixParentScanId ? await loadScan(remixParentScanId) : null
         const rootScanId = parentScan?.rootScanId ?? parentScan?.id
         const remixDepth = parentScan ? (parentScan.remixDepth ?? 0) + 1 : (remixParentScanId ? 1 : undefined)
@@ -167,6 +175,8 @@ async function executeScanRun(input: ScanRunInput): Promise<string> {
           pivotSuggestions: pivots,
           readinessScore,
           lucrativenessScore,
+          validationScore,
+          opportunityScore,
           parentScanId: remixParentScanId,
           rootScanId,
           remixType,

@@ -37,6 +37,26 @@ export function lucrativenessBadgeColor(tier?: SavedScanSummary["lucrativenessTi
   }
 }
 
+export function validationBadgeColor(tier?: SavedScanSummary["validationTier"]) {
+  switch (tier) {
+    case "very_high": return "bg-emerald-50 text-emerald-700 border-emerald-200"
+    case "high": return "bg-green-50 text-green-700 border-green-200"
+    case "medium": return "bg-yellow-50 text-yellow-700 border-yellow-200"
+    case "low": return "bg-gray-50 text-gray-700 border-gray-200"
+    default: return "bg-gray-50 text-gray-700 border-gray-200"
+  }
+}
+
+export function opportunityBadgeColor(tier?: SavedScanSummary["opportunityTier"]) {
+  switch (tier) {
+    case "very_high": return "bg-cyan-50 text-cyan-700 border-cyan-200"
+    case "high": return "bg-sky-50 text-sky-700 border-sky-200"
+    case "medium": return "bg-blue-50 text-blue-700 border-blue-200"
+    case "low": return "bg-gray-50 text-gray-700 border-gray-200"
+    default: return "bg-gray-50 text-gray-700 border-gray-200"
+  }
+}
+
 export function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
   const mins = Math.floor(diff / 60000)

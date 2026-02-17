@@ -15,7 +15,7 @@ Recon should be the fastest path from rough idea to decision-quality strategy, w
 - 0 high-severity scoring regressions in adversarial suite.
 - 95%+ scans finish without stale jobs.
 - Median scan latency stable while maintaining quality.
-- Feed and detail views consistently explain score rationale (clone risk, evidence, lucrativeness).
+- Feed and detail views consistently explain score rationale (clone risk, evidence, lucrativeness, validation, opportunity).
 
 ## Product Roadmap Priorities
 1. Scoring realism and interpretability.

@@ -322,6 +322,32 @@ export interface SavedScan {
     breakdown: { factor: string; score: number; max: number; detail: string }[]
     verdict: string
   }
+  validationScore?: {
+    total: number
+    tier: "low" | "medium" | "high" | "very_high"
+    hasLiveSignals: boolean
+    gate: {
+      status: "pass" | "watch" | "fail"
+      reasons: string[]
+    }
+    breakdown: { factor: string; score: number; max: number; detail: string }[]
+    verdict: string
+  }
+  opportunityScore?: {
+    total: number
+    tier: "low" | "medium" | "high" | "very_high"
+    weights: {
+      readiness: number
+      lucrativeness: number
+      validation: number
+    }
+    inputs: {
+      readiness: number
+      lucrativeness: number
+      validation: number
+    }
+    verdict: string
+  }
   parentScanId?: string
   rootScanId?: string
   remixType?: ScanRemixType
@@ -342,6 +368,10 @@ export interface SavedScanSummary {
   uniquenessScore?: number
   lucrativenessScore?: number
   lucrativenessTier?: "low" | "medium" | "high" | "very_high"
+  validationScore?: number
+  validationTier?: "low" | "medium" | "high" | "very_high"
+  opportunityScore?: number
+  opportunityTier?: "low" | "medium" | "high" | "very_high"
   crowdednessIndex: string
   parentScanId?: string
   rootScanId?: string

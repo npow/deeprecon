@@ -9,6 +9,11 @@ interface ReadinessScoreCardProps {
   evidenceConfidence?: number | null
   lucrativenessScore?: number | null
   lucrativenessTier?: "low" | "medium" | "high" | "very_high" | null
+  validationScore?: number | null
+  validationTier?: "low" | "medium" | "high" | "very_high" | null
+  validationGate?: "pass" | "watch" | "fail" | null
+  opportunityScore?: number | null
+  opportunityTier?: "low" | "medium" | "high" | "very_high" | null
 }
 
 function gradeColor(grade: string) {
@@ -199,11 +204,36 @@ function lucrativenessTone(tier?: "low" | "medium" | "high" | "very_high" | null
   return "bg-gray-50 text-gray-700 border-gray-200"
 }
 
+function validationTone(tier?: "low" | "medium" | "high" | "very_high" | null): string {
+  if (tier === "very_high") return "bg-emerald-50 text-emerald-700 border-emerald-200"
+  if (tier === "high") return "bg-green-50 text-green-700 border-green-200"
+  if (tier === "medium") return "bg-yellow-50 text-yellow-700 border-yellow-200"
+  return "bg-gray-50 text-gray-700 border-gray-200"
+}
+
+function validationGateTone(gate?: "pass" | "watch" | "fail" | null): string {
+  if (gate === "pass") return "bg-green-50 text-green-700 border-green-200"
+  if (gate === "watch") return "bg-yellow-50 text-yellow-700 border-yellow-200"
+  return "bg-red-50 text-red-700 border-red-200"
+}
+
+function opportunityTone(tier?: "low" | "medium" | "high" | "very_high" | null): string {
+  if (tier === "very_high") return "bg-cyan-50 text-cyan-700 border-cyan-200"
+  if (tier === "high") return "bg-sky-50 text-sky-700 border-sky-200"
+  if (tier === "medium") return "bg-blue-50 text-blue-700 border-blue-200"
+  return "bg-gray-50 text-gray-700 border-gray-200"
+}
+
 export function ReadinessScoreCard({
   score,
   evidenceConfidence = null,
   lucrativenessScore = null,
   lucrativenessTier = null,
+  validationScore = null,
+  validationTier = null,
+  validationGate = null,
+  opportunityScore = null,
+  opportunityTier = null,
 }: ReadinessScoreCardProps) {
   const colors = gradeColor(score.grade)
 
@@ -225,6 +255,21 @@ export function ReadinessScoreCard({
             {lucrativenessScore != null && (
               <span className={`text-[11px] px-2 py-0.5 rounded-full border font-medium ${lucrativenessTone(lucrativenessTier)}`}>
                 Lucrativeness: {lucrativenessScore}/100
+              </span>
+            )}
+            {validationScore != null && (
+              <span className={`text-[11px] px-2 py-0.5 rounded-full border font-medium ${validationTone(validationTier)}`}>
+                Validation: {validationScore}/100
+              </span>
+            )}
+            {validationGate != null && (
+              <span className={`text-[11px] px-2 py-0.5 rounded-full border font-medium ${validationGateTone(validationGate)}`}>
+                Validation Gate: {validationGate}
+              </span>
+            )}
+            {opportunityScore != null && (
+              <span className={`text-[11px] px-2 py-0.5 rounded-full border font-medium ${opportunityTone(opportunityTier)}`}>
+                Opportunity: {opportunityScore}/100
               </span>
             )}
             {score.cloneRisk && (

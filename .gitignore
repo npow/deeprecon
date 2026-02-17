@@ -40,3 +40,6 @@ next-env.d.ts
 # IDE
 .vscode/
 .idea/
+
+# Browser smoke outputs
+artifacts/browser-smoke/

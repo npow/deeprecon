@@ -22,6 +22,9 @@ import {
   generateUniquenessSuggestions,
   type UniquenessSuggestion,
 } from "@/lib/readiness-score"
+import { computeLucrativenessScore } from "@/lib/lucrativeness-score"
+import { computeValidationScore } from "@/lib/validation-score"
+import { computeOpportunityScore } from "@/lib/opportunity-score"
 import { buildLandingPagePrompt, buildDeepLinks } from "@/lib/landing-page-gen"
 import { computeEvidenceConfidence } from "@/lib/evidence-confidence"
 import {
@@ -122,6 +125,21 @@ export default function HomeInner() {
     if (!readinessScore || !ddReport) return null
     return generateNextSteps(readinessScore, ddReport, pivots, competitors, gapAnalysis)
   }, [readinessScore, ddReport, pivots, competitors, gapAnalysis])
+
+  const lucrativenessScore = useMemo(() => {
+    if (!ddReport) return null
+    return computeLucrativenessScore(ddReport, competitors, gapAnalysis)
+  }, [ddReport, competitors, gapAnalysis])
+
+  const validationScore = useMemo(() => {
+    if (!ddReport) return null
+    return computeValidationScore(ddReport, competitors, gapAnalysis)
+  }, [ddReport, competitors, gapAnalysis])
+
+  const opportunityScore = useMemo(() => {
+    if (!readinessScore || !lucrativenessScore || !validationScore) return null
+    return computeOpportunityScore(readinessScore.total, lucrativenessScore.total, validationScore)
+  }, [readinessScore, lucrativenessScore, validationScore])
 
   // ─── Computed: Structured uniqueness optimization suggestions ───
   const uniquenessSuggestions = useMemo(() => {
@@ -927,7 +945,19 @@ export default function HomeInner() {
         </div>
 
         {/* Readiness Score Card — hero metric, always visible above tabs */}
-        {readinessScore && <ReadinessScoreCard score={readinessScore} evidenceConfidence={evidenceConfidence.score} />}
+        {readinessScore && (
+          <ReadinessScoreCard
+            score={readinessScore}
+            evidenceConfidence={evidenceConfidence.score}
+            lucrativenessScore={lucrativenessScore?.total ?? null}
+            lucrativenessTier={lucrativenessScore?.tier ?? null}
+            validationScore={validationScore?.total ?? null}
+            validationTier={validationScore?.tier ?? null}
+            validationGate={validationScore?.gate.status ?? null}
+            opportunityScore={opportunityScore?.total ?? null}
+            opportunityTier={opportunityScore?.tier ?? null}
+          />
+        )}
 
         {readinessScore && nextSteps && (
           <DecisionHeader
