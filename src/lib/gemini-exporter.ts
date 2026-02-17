@@ -197,6 +197,8 @@ export async function streamGenerate(
   }
 
   if (!res.ok) {
+    const errBody = await res.text().catch(() => "")
+    console.error(`[gemini-exporter] StreamGenerate ${res.status}:`, errBody.slice(0, 500))
     throw new GeminiAPIError(`StreamGenerate failed: ${res.status}`, res.status)
   }
 

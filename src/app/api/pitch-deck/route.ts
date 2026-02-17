@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     }
     if (err instanceof GeminiAPIError) {
       console.error("[pitch-deck] Gemini API error:", err.status, err.message)
-      const status = err.status === 429 ? 429 : 502
+      const status = err.status === 429 ? 429 : 503
       return NextResponse.json({ error: err.message }, { status })
     }
     console.error("[pitch-deck] Unexpected error:", err)
