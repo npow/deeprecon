@@ -1,9 +1,9 @@
 # Stage 1: Build CLIProxyAPI from source
-FROM golang:1.23-alpine AS builder
+FROM golang:1.24-alpine AS builder
 RUN apk add --no-cache git
 WORKDIR /src
 RUN git clone --branch npow/cursor --depth 1 https://github.com/npow/CLIProxyAPI.git .
-RUN CGO_ENABLED=0 GOOS=linux go build -o /cliproxy .
+RUN CGO_ENABLED=0 GOOS=linux go build -o /cliproxy ./cmd/server
 
 # Stage 2: Minimal runtime
 FROM alpine:3.19 AS runner
@@ -16,4 +16,4 @@ USER cliproxy
 
 EXPOSE 8317
 
-CMD ["cliproxy"]
+CMD ["cliproxy", "-config", "/home/cliproxy/.config/cliproxyapi.conf"]
