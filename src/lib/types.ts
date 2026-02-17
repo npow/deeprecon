@@ -1,17 +1,29 @@
+export type WebsiteStatus = "verified" | "dead" | "parked" | "mismatch" | "unknown"
+export type ConfidenceLevel = "web_verified" | "multi_confirmed" | "ai_inferred"
+
 export interface ScanSettings {
   maxCompetitors: number
   depthLevel: "quick" | "standard" | "deep"
+  workflowMode: "founder" | "investor"
+  experimentVariants: number
 }
 
 export const DEFAULT_SETTINGS: ScanSettings = {
   maxCompetitors: 10,
   depthLevel: "standard",
+  workflowMode: "founder",
+  experimentVariants: 3,
 }
 
 export interface ScanRequest {
   ideaText: string
   vertical?: string
   settings?: ScanSettings
+  remix?: {
+    parentScanId: string
+    remixType?: ScanRemixType
+    remixLabel?: string
+  }
 }
 
 export interface IntentExtraction {
@@ -24,18 +36,34 @@ export interface IntentExtraction {
 }
 
 export interface Competitor {
+  id?: string                 // stable UUID — for DB PK
   name: string
   description: string
   websiteUrl?: string
+  linkedinUrl?: string
+  crunchbaseUrl?: string
   similarityScore: number
   totalFundingUsd?: number
   lastFundingType?: string
   lastFundingDate?: string
   employeeCountRange?: string
+  yearFounded?: number
+  headquartersLocation?: string
+  pricingModel?: string       // e.g. "freemium", "usage-based", "enterprise"
+  targetCustomer?: string     // e.g. "SMB", "mid-market", "enterprise"
+  logoUrl?: string
   sentimentScore?: number
   topComplaints: string[]
   keyDifferentiators: string[]
-  source: "crunchbase" | "producthunt" | "reddit" | "ai_knowledge"
+  tags?: string[]             // faceted search labels
+  source: "crunchbase" | "producthunt" | "reddit" | "ai_knowledge" | "web_search"
+  discoveredBy?: string       // which model/provider found this
+  discoveredAt?: string       // ISO timestamp
+  websiteStatus?: WebsiteStatus
+  websiteStatusReason?: string
+  confirmedBy?: string[]
+  confirmedByCount?: number
+  confidenceLevel?: ConfidenceLevel
 }
 
 export interface GapAnalysis {
@@ -155,16 +183,40 @@ export interface ScanResult {
 // ─── Market Maps ───
 
 export interface SubCategoryPlayer {
+  id?: string                // stable UUID — for DB PK
   name: string
   oneLiner: string
-  funding: string
+  funding: string            // formatted string e.g. "$50M"
+  totalFundingUsd?: number   // raw numeric value for sorting/filtering
   stage: string
-  executionScore: number   // 0-100, for Magic Quadrant
-  visionScore: number      // 0-100, for Magic Quadrant
+  lastFundingDate?: string
+  executionScore: number     // 0-100, for Magic Quadrant
+  visionScore: number        // 0-100, for Magic Quadrant
   competitiveFactors: { factor: string; score: number }[]  // 1-10, for Strategy Canvas
+  websiteUrl?: string
+  linkedinUrl?: string
+  crunchbaseUrl?: string
+  logoUrl?: string
+  foundedYear?: number
+  headquartersLocation?: string
+  employeeCountRange?: string
+  pricingModel?: string      // e.g. "freemium", "usage-based", "enterprise"
+  targetCustomer?: string    // e.g. "SMB", "mid-market", "enterprise"
+  tags?: string[]            // faceted search / cross-subcategory discovery
+  similarityScore?: number   // relevance to the scan that discovered it
+  source?: string            // provenance: "crunchbase", "web_search", "enrich", etc.
+  discoveredAt?: string      // ISO timestamp — when first seen
+  updatedAt?: string         // ISO timestamp — last data refresh
+  discoveredBy?: string      // model/provider that found it
+  websiteStatus?: WebsiteStatus
+  websiteStatusReason?: string
+  confirmedBy?: string[]
+  confirmedByCount?: number
+  confidenceLevel?: ConfidenceLevel
 }
 
 export interface SubCategory {
+  id?: string              // UUID for DB PK (slug used as fallback)
   slug: string
   name: string
   description: string
@@ -176,8 +228,10 @@ export interface SubCategory {
   topPlayers: SubCategoryPlayer[]
   keyGaps: string[]
   deepDivePrompt: string
-  megaCategory: string  // grouping label, e.g. "AI & Automation"
+  megaCategory: string    // grouping label, e.g. "AI & Automation"
   lastEnrichedAt?: string
+  createdAt?: string       // ISO timestamp
+  updatedAt?: string       // ISO timestamp
 }
 
 export interface MegaCategoryDef {
@@ -186,6 +240,7 @@ export interface MegaCategoryDef {
 }
 
 export interface VerticalMap {
+  id?: string              // UUID for DB PK (slug used as fallback)
   slug: string
   name: string
   description: string
@@ -199,6 +254,8 @@ export interface VerticalMap {
   megaCategories: MegaCategoryDef[]
   strategyCanvasFactors: string[]  // shared factor names
   lastEnrichedAt?: string
+  updatedAt?: string       // ISO timestamp
+  createdBy?: string       // user/system attribution
 }
 
 export interface VerticalDefinition {
@@ -232,6 +289,67 @@ export type ScanEvent =
   | { type: "scan_complete"; data: { id: string } }
   | { type: "scan_error"; data: { message: string } }
   | { type: "status_update"; data: { stage: string; message: string } }
+  | { type: "map_enriched"; data: { slug: string; subCategory: string; newCount: number; updatedCount: number } }
+  | { type: "queue_position"; data: { position: number } }
+  | { type: "rate_limited"; data: { retryAfterMs: number; message: string } }
+
+// ─── Saved Scans ───
+
+export interface SavedScan {
+  id: string
+  ideaText: string
+  intent: IntentExtraction
+  crowdednessIndex: string
+  competitors: Competitor[]
+  totalFundingInSpace: number
+  gapAnalysis: GapAnalysis
+  ddReport: DDReport
+  pivotSuggestions: PivotSuggestion[]
+  readinessScore: {
+    total: number
+    grade: string
+    breakdown: { factor: string; score: number; max: number; detail: string }[]
+    verdict: string
+    cloneRisk?: {
+      level: "low" | "medium" | "high"
+      penalty: number
+      reason: string
+    }
+  }
+  lucrativenessScore?: {
+    total: number
+    tier: "low" | "medium" | "high" | "very_high"
+    breakdown: { factor: string; score: number; max: number; detail: string }[]
+    verdict: string
+  }
+  parentScanId?: string
+  rootScanId?: string
+  remixType?: ScanRemixType
+  remixLabel?: string
+  remixDepth?: number
+  createdAt: string
+}
+
+export type ScanRemixType = "uniqueness_suggestion" | "uniqueness_experiment" | "manual_rescan"
+
+export interface SavedScanSummary {
+  id: string
+  ideaText: string
+  vertical: string
+  category: string
+  score: number
+  grade: string
+  uniquenessScore?: number
+  lucrativenessScore?: number
+  lucrativenessTier?: "low" | "medium" | "high" | "very_high"
+  crowdednessIndex: string
+  parentScanId?: string
+  rootScanId?: string
+  remixType?: ScanRemixType
+  remixLabel?: string
+  remixDepth?: number
+  createdAt: string
+}
 
 // Enrichment SSE events
 export type EnrichEvent =
