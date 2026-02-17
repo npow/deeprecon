@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { Radar, Map, ArrowLeft, List, ExternalLink } from "lucide-react"
+import { Radar, Map, ArrowLeft, List, ExternalLink, Presentation, Loader2 } from "lucide-react"
 import { LandscapeTab } from "@/components/results/landscape-tab"
 import { GapsTab } from "@/components/results/gaps-tab"
 import { DDReportTab } from "@/components/results/dd-report-tab"
@@ -27,6 +27,7 @@ export default function ScanDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [activeTab, setActiveTab] = useState<ResultTab>("dd_report")
+  const [deckLoading, setDeckLoading] = useState(false)
 
   useEffect(() => {
     fetch(`/api/scans/${id}`)
@@ -73,6 +74,35 @@ export default function ScanDetailPage() {
     router.push(`/?idea=${encodeURIComponent(target)}&autoscan=1`)
   }, [router, scan?.ideaText, uniquenessSuggestions])
 
+  const handleGenerateDeck = useCallback(async () => {
+    setDeckLoading(true)
+    try {
+      const res = await fetch("/api/pitch-deck", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scanId: id }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Unknown error" }))
+        alert(`Failed to generate pitch deck: ${err.error || res.statusText}`)
+        return
+      }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `pitch-deck-${id.slice(0, 20)}.pptx`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      alert(`Failed to generate pitch deck: ${err instanceof Error ? err.message : "Unknown error"}`)
+    } finally {
+      setDeckLoading(false)
+    }
+  }, [id])
+
   const evidenceConfidence = useMemo(
     () => computeEvidenceConfidence(scan?.competitors || [], scan?.ddReport, scan?.gapAnalysis),
     [scan]
@@ -116,7 +146,7 @@ export default function ScanDetailPage() {
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 hover:opacity-70 transition-opacity">
             <Radar className="h-5 w-5 text-brand-600" />
-            <span className="font-bold text-gray-900">Recon</span>
+            <span className="font-bold text-gray-900">DeepRecon</span>
           </Link>
           <div className="flex items-center gap-2">
             <Link
@@ -164,6 +194,14 @@ export default function ScanDetailPage() {
                   Generate in Bolt
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>
+                <button
+                  onClick={handleGenerateDeck}
+                  disabled={deckLoading}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 hover:border-amber-300 hover:bg-amber-100 px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deckLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Presentation className="h-3.5 w-3.5" />}
+                  {deckLoading ? "Generating..." : "Pitch Deck"}
+                </button>
               </div>
             )}
           </div>
