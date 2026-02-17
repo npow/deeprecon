@@ -2,19 +2,31 @@
 
 import { stringify } from "@/lib/utils"
 import { type SubCategoryPlayer } from "@/lib/types"
+import { ExternalLink } from "lucide-react"
+import { WebsiteStatusBadge } from "@/components/website-status-badge"
+import { SourceConfidenceBadge } from "@/components/source-confidence-badge"
 
-const stageBadgeColor: Record<string, string> = {
+export const stageBadgeColor: Record<string, string> = {
   "Pre-Seed": "bg-gray-100 text-gray-600",
   "Seed": "bg-amber-50 text-amber-700",
   "Series A": "bg-blue-50 text-blue-700",
   "Series B": "bg-indigo-50 text-indigo-700",
   "Series C": "bg-purple-50 text-purple-700",
   "Series D+": "bg-pink-50 text-pink-700",
-  "IPO": "bg-green-50 text-green-700",
+  "Public": "bg-green-50 text-green-700",
   "Bootstrapped": "bg-gray-50 text-gray-600",
+  "Open Source": "bg-emerald-50 text-emerald-700",
+  "Corporate": "bg-slate-100 text-slate-700",
+  "Private Equity": "bg-violet-50 text-violet-700",
+  "Research": "bg-cyan-50 text-cyan-700",
+  "Late Stage": "bg-orange-50 text-orange-700",
+  "Growth": "bg-lime-50 text-lime-700",
+  "Early Stage": "bg-sky-50 text-sky-700",
+  "Acquired": "bg-rose-50 text-rose-700",
+  "Unknown": "bg-gray-50 text-gray-400",
 }
 
-function getStageColor(stage: string): string {
+export function getStageColor(stage: string): string {
   const key = Object.keys(stageBadgeColor).find(
     (k) => stage.toLowerCase().includes(k.toLowerCase())
   )
@@ -49,7 +61,21 @@ export function PlayerDetailCard({
       {/* Header */}
       <div className="flex items-start justify-between mb-2">
         <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-gray-900 text-sm">{stringify(player.name)}</h4>
+          <div className="flex items-center gap-1.5">
+            <h4 className="font-semibold text-gray-900 text-sm">{stringify(player.name)}</h4>
+            {player.websiteUrl && (
+              <a
+                href={String(player.websiteUrl)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-brand-500"
+              >
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
+            <WebsiteStatusBadge status={player.websiteStatus} />
+            <SourceConfidenceBadge level={player.confidenceLevel} confirmedBy={player.confirmedBy} confirmedByCount={player.confirmedByCount} />
+          </div>
           <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{stringify(player.oneLiner)}</p>
         </div>
       </div>

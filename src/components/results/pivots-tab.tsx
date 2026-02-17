@@ -1,8 +1,9 @@
 "use client"
 
 import { PivotSuggestion } from "@/lib/types"
-import { stringify } from "@/lib/utils"
+import { stringify, formatMarketSize } from "@/lib/utils"
 import { ArrowRightLeft, BarChart3, Wrench } from "lucide-react"
+import { RichText } from "./rich-text"
 
 interface PivotsTabProps {
   pivots: PivotSuggestion[]
@@ -36,7 +37,7 @@ export function PivotsTab({ pivots }: PivotsTabProps) {
               <div className="w-7 h-7 bg-brand-100 text-brand-700 rounded-lg flex items-center justify-center text-sm font-bold">
                 {i + 1}
               </div>
-              <h3 className="font-semibold text-gray-900">{stringify(pivot.title)}</h3>
+              <h3 className="font-semibold text-gray-900"><RichText inline value={pivot.title} /></h3>
             </div>
             <span
               className={`text-xs font-medium px-2 py-1 rounded-full ${
@@ -51,7 +52,7 @@ export function PivotsTab({ pivots }: PivotsTabProps) {
             </span>
           </div>
 
-          <p className="text-sm text-gray-700 mb-3">{stringify(pivot.description)}</p>
+          <RichText className="text-sm text-gray-700 mb-3 leading-relaxed break-words" value={pivot.description} />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
             <div className="bg-purple-50 rounded-lg p-3">
@@ -61,7 +62,7 @@ export function PivotsTab({ pivots }: PivotsTabProps) {
                   Why it works
                 </span>
               </div>
-              <p className="text-xs text-purple-900">{stringify(pivot.whyItWorks)}</p>
+              <RichText className="text-xs text-purple-900 leading-relaxed break-words" value={pivot.whyItWorks} />
             </div>
 
             <div className="bg-green-50 rounded-lg p-3">
@@ -71,7 +72,7 @@ export function PivotsTab({ pivots }: PivotsTabProps) {
                   Market size
                 </span>
               </div>
-              <p className="text-xs text-green-900">{stringify(pivot.estimatedMarketSize)}</p>
+              <p className="text-xs text-green-900">{formatMarketSize(pivot.estimatedMarketSize)}</p>
             </div>
 
             <div className="bg-blue-50 rounded-lg p-3">
@@ -81,7 +82,7 @@ export function PivotsTab({ pivots }: PivotsTabProps) {
                   Adjacent examples
                 </span>
               </div>
-              <p className="text-xs text-blue-900">{stringify(pivot.adjacentExamples)}</p>
+              <RichText className="text-xs text-blue-900 leading-relaxed break-words" value={pivot.adjacentExamples} />
             </div>
           </div>
         </div>

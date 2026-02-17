@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   TrendingDown,
   Minus,
@@ -147,19 +148,30 @@ function SubCategoryCard({ sub, index, verticalSlug }: { sub: SubCategory; index
         </div>
       )}
 
-      {/* Deep dive */}
+      {/* Deep dive — uses button to avoid <a> inside <a> hydration error */}
       {sub.deepDivePrompt && (
-        <Link
-          href={`/?idea=${encodeURIComponent(stringify(sub.deepDivePrompt))}`}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-lg transition-colors mt-1"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Search className="h-3 w-3" />
-          Deep Dive
-          <ArrowRight className="h-3 w-3" />
-        </Link>
+        <DeepDiveButton prompt={stringify(sub.deepDivePrompt)} />
       )}
     </div>
     </Wrapper>
+  )
+}
+
+function DeepDiveButton({ prompt }: { prompt: string }) {
+  const router = useRouter()
+  return (
+    <button
+      type="button"
+      className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-lg transition-colors mt-1"
+      onClick={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        router.push(`/?idea=${encodeURIComponent(prompt)}`)
+      }}
+    >
+      <Search className="h-3 w-3" />
+      Deep Dive
+      <ArrowRight className="h-3 w-3" />
+    </button>
   )
 }

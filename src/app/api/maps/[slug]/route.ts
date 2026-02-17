@@ -88,7 +88,7 @@ function mergeProviderIntoMap(
     name: vertical.name,
     description: vertical.description,
     generatedAt: new Date().toISOString(),
-    schemaVersion: 2,
+    schemaVersion: 3,
     totalPlayers,
     totalFunding: providerData.totalFunding || existingMap?.totalFunding || "N/A",
     overallCrowdedness: mergedSubs.length > 0

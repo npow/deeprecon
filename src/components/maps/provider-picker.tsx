@@ -13,6 +13,10 @@ export function providerColor(id: string): string {
   if (id.startsWith("qwen")) return "bg-violet-100 border-violet-300 text-violet-800"
   if (id.startsWith("kimi")) return "bg-pink-100 border-pink-300 text-pink-800"
   if (id.startsWith("glm")) return "bg-cyan-100 border-cyan-300 text-cyan-800"
+  if (id.startsWith("ag-")) return "bg-amber-100 border-amber-300 text-amber-800"
+  if (id.startsWith("cursor-")) return "bg-teal-100 border-teal-300 text-teal-800"
+  if (id.startsWith("grok")) return "bg-rose-100 border-rose-300 text-rose-800"
+  if (id.startsWith("minimax")) return "bg-lime-100 border-lime-300 text-lime-800"
   return "bg-gray-100 border-gray-300 text-gray-800"
 }
 
@@ -24,6 +28,10 @@ function providerOwner(id: string): string {
   if (id.startsWith("qwen")) return "Alibaba"
   if (id.startsWith("kimi")) return "Moonshot"
   if (id.startsWith("glm")) return "Zhipu"
+  if (id.startsWith("ag-")) return "Antigravity"
+  if (id.startsWith("cursor-")) return "Cursor"
+  if (id.startsWith("grok")) return "xAI"
+  if (id.startsWith("minimax")) return "MiniMax"
   return ""
 }
 

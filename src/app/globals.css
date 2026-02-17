@@ -50,3 +50,96 @@
 .animate-view-enter {
   animation: view-enter 0.3s ease-out forwards;
 }
+
+/* ─── Screen/print visibility ─── */
+.print-only {
+  display: none !important;
+}
+
+/* ─── Print styles for Share PDF ─── */
+@media print {
+  /* Show print-only content, hide screen-only content */
+  .print-only {
+    display: block !important;
+  }
+  .screen-only {
+    display: none !important;
+  }
+
+  /* Force clean background */
+  body {
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Hide nav bar, tab bar, idea badges, map enrichment banner */
+  nav {
+    display: none !important;
+  }
+
+  /* Remove min-height that causes blank pages */
+  .min-h-screen {
+    min-height: auto !important;
+  }
+
+  /* Print header branding */
+  main::before {
+    content: "Recon Report";
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    color: #111;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+    border-bottom: 2px solid #e5e7eb;
+  }
+
+  /* Remove max-width constraint so content fills page */
+  main {
+    max-width: 100% !important;
+    padding: 0 20px !important;
+    margin: 0 !important;
+  }
+
+  /* Page breaks between major sections */
+  .print-section {
+    break-before: page;
+  }
+  .print-section:first-child {
+    break-before: auto;
+  }
+
+  /* Clean typography: no shadows */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Avoid breaking inside individual cards */
+  .print-section table,
+  .print-section img,
+  .print-section svg {
+    break-inside: avoid;
+  }
+  .space-y-4 > div,
+  .space-y-3 > div {
+    break-inside: avoid;
+  }
+
+  /* Kill animations that can leave elements at opacity:0 */
+  .animate-fade-in,
+  .animate-slide-up,
+  .animate-view-enter {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* Keep links readable but not clickable-looking */
+  a {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+}

@@ -201,7 +201,7 @@ export async function POST(request: NextRequest) {
               name: vertical.name,
               description: vertical.description,
               generatedAt: new Date().toISOString(),
-              schemaVersion: 2,
+              schemaVersion: 3,
               totalPlayers,
               totalFunding: results[0].data.totalFunding || "N/A",
               overallCrowdedness: Math.round(
@@ -364,12 +364,18 @@ export async function GET() {
   return new Response(
     JSON.stringify({
       running: turboRunning,
-      providers: DEFAULT_PROVIDERS.map((p) => ({
-        id: p.id,
-        label: p.label,
-        model: p.model,
-        available: availableIds.has(p.id),
-      })),
+      providers: DEFAULT_PROVIDERS
+        .map((p) => ({
+          id: p.id,
+          label: p.label,
+          model: p.model,
+          available: availableIds.has(p.id),
+        }))
+        .sort((a, b) => {
+          // Sort: available first, then alphabetically by label
+          if (a.available !== b.available) return a.available ? -1 : 1
+          return a.label.localeCompare(b.label)
+        }),
       availableCount: available.length,
       verticals: verticals.map((v) => ({
         slug: v.slug,

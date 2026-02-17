@@ -9,7 +9,6 @@ import {
   Loader2,
   ArrowLeft,
   Sparkles,
-  ArrowUpDown,
   Search,
   ArrowRight,
   Flame,
@@ -17,29 +16,13 @@ import {
   Minus,
 } from "lucide-react"
 import { stringify } from "@/lib/utils"
-import { type VerticalMap, type SubCategory } from "@/lib/types"
-import { PlayerDetailCard } from "@/components/maps/player-detail-card"
+import { type VerticalMap } from "@/lib/types"
+import { PlayerHeatmap } from "@/components/maps/player-heatmap"
 import {
   EnrichProgressBanner,
   INITIAL_ENRICH_STATE,
   type EnrichProgressState,
 } from "@/components/maps/enrich-progress"
-
-type SortKey = "name" | "funding" | "execution" | "vision"
-
-function parseFundingForSort(f: string): number {
-  if (!f) return 0
-  const cleaned = f.replace(/[^0-9.BMKbmk]/g, "")
-  const match = cleaned.match(/^([\d.]+)\s*([BMKbmk])?/)
-  if (!match) return 0
-  const num = parseFloat(match[1])
-  if (isNaN(num)) return 0
-  const suffix = (match[2] || "").toUpperCase()
-  if (suffix === "B") return num * 1e9
-  if (suffix === "M") return num * 1e6
-  if (suffix === "K") return num * 1e3
-  return num
-}
 
 export default function SubCategoryDetailPage() {
   const params = useParams()
@@ -49,8 +32,6 @@ export default function SubCategoryDetailPage() {
   const [map, setMap] = useState<VerticalMap | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [sortKey, setSortKey] = useState<SortKey>("execution")
-  const [sortAsc, setSortAsc] = useState(false)
   const [enrichState, setEnrichState] = useState<EnrichProgressState>(INITIAL_ENRICH_STATE)
 
   const fetchMap = useCallback(async () => {
@@ -70,36 +51,6 @@ export default function SubCategoryDetailPage() {
   }, [fetchMap])
 
   const sub = map?.subCategories.find((s) => s.slug === subSlug)
-
-  const sortedPlayers = sub
-    ? [...sub.topPlayers].sort((a, b) => {
-        let cmp = 0
-        switch (sortKey) {
-          case "name":
-            cmp = stringify(a.name).localeCompare(stringify(b.name))
-            break
-          case "funding":
-            cmp = parseFundingForSort(stringify(a.funding)) - parseFundingForSort(stringify(b.funding))
-            break
-          case "execution":
-            cmp = a.executionScore - b.executionScore
-            break
-          case "vision":
-            cmp = a.visionScore - b.visionScore
-            break
-        }
-        return sortAsc ? cmp : -cmp
-      })
-    : []
-
-  function handleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortAsc(!sortAsc)
-    } else {
-      setSortKey(key)
-      setSortAsc(false)
-    }
-  }
 
   async function handleEnrich() {
     setEnrichState({ ...INITIAL_ENRICH_STATE, running: true })
@@ -353,44 +304,12 @@ export default function SubCategoryDetailPage() {
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
         <EnrichProgressBanner state={enrichState} />
 
-        {/* Sort controls */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-gray-900">
-            All Players
-            <span className="text-sm font-normal text-gray-400 ml-2">{sortedPlayers.length} companies</span>
-          </h2>
-          <div className="flex items-center gap-1">
-            <ArrowUpDown className="h-3.5 w-3.5 text-gray-400 mr-1" />
-            {(["execution", "vision", "funding", "name"] as SortKey[]).map((key) => (
-              <button
-                key={key}
-                onClick={() => handleSort(key)}
-                className={`text-xs px-2.5 py-1 rounded-full transition-colors ${
-                  sortKey === key
-                    ? "bg-brand-600 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                {key.charAt(0).toUpperCase() + key.slice(1)}
-                {sortKey === key && (sortAsc ? " ↑" : " ↓")}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Player grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {sortedPlayers.map((player, i) => (
-            <div key={i} className="animate-view-enter" style={{ animationDelay: `${i * 30}ms` }}>
-              <PlayerDetailCard
-                player={player}
-                strategyCanvasFactors={map.strategyCanvasFactors}
-              />
-            </div>
-          ))}
-        </div>
-
-        {sortedPlayers.length === 0 && (
+        {sub.topPlayers.length > 0 ? (
+          <PlayerHeatmap
+            players={sub.topPlayers}
+            strategyCanvasFactors={map.strategyCanvasFactors}
+          />
+        ) : (
           <div className="text-center py-12 text-gray-400">
             <p className="mb-2">No players catalogued yet.</p>
             <button

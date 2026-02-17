@@ -1,11 +1,14 @@
-export const INTENT_EXTRACTION_PROMPT = `You are analyzing a startup idea to extract structured search parameters for competitive intelligence research.
+export const INTENT_EXTRACTION_PROMPT = `You are analyzing a product/business idea to extract structured search parameters for competitive intelligence research.
 
 Given the user's idea description, extract:
 
 1. keywords: 5-8 search terms that would find competing products
 2. vertical: the industry vertical (e.g., "proptech", "fintech", "healthtech", "edtech", "devtools", "martech", "legaltech", "insurtech", "logistics", "hr_tech", "cybersecurity", "climate_tech", "food_tech", "gaming", "social", "creator_economy", "other")
 3. category: the business model category (e.g., "B2B SaaS", "B2C SaaS", "marketplace", "consumer app", "API/infrastructure", "hardware", "platform", "services", "media", "other")
-4. searchQueries: 3-5 natural language search queries to find competitors (as if searching Google or Crunchbase)
+4. searchQueries: 5-8 natural language search queries to find competitors. Include a mix appropriate to the domain.
+   - For startup/commercial software ideas: include funded companies, bootstrapped tools, and recent AI-native entrants.
+   - For public-sector, research-administration, or compliance-heavy ideas: prioritize incumbents, govtech/procurement vendors, legacy systems, and policy/compliance workflow tools.
+   - If the user explicitly says "not startup/venture", do NOT bias queries toward startup/VC tools.
 5. redditSubreddits: 3-5 relevant subreddit names where the target customer discusses this problem
 6. oneLinerSummary: a clear one-line summary of what this product does
 
@@ -19,21 +22,28 @@ Return valid JSON matching this exact schema:
   "oneLinerSummary": "string"
 }`
 
-export const COMPETITIVE_ANALYSIS_PROMPT = `You are a senior competitive intelligence analyst. Given a startup idea and its extracted intent, identify all significant competitors.
+export const COMPETITIVE_ANALYSIS_PROMPT = `You are a senior competitive intelligence analyst. Given a product/business idea and its extracted intent, identify all significant competitors.
 
 For each competitor, provide:
 - name: Company name
 - description: One-line description of what they do
 - websiteUrl: Their website URL (if known)
+- linkedinUrl: LinkedIn company page URL (if known, or null)
+- crunchbaseUrl: Crunchbase profile URL (if known, or null)
 - similarityScore: 0-100, how similar they are to the proposed idea
 - totalFundingUsd: Total funding raised in USD (use your best knowledge; put 0 if bootstrapped/unknown)
 - lastFundingType: "pre_seed", "seed", "series_a", "series_b", "series_c", "series_d_plus", "bootstrapped", or "unknown"
 - lastFundingDate: Approximate date of last funding (YYYY-MM format, or "unknown")
 - employeeCountRange: "1-10", "11-50", "51-200", "201-500", "501-1000", "1000+"
+- yearFounded: Year the company was founded (number, or null if unknown)
+- headquartersLocation: City, State/Country (e.g. "San Francisco, CA" or "London, UK", or null)
+- pricingModel: "freemium", "free", "usage_based", "subscription", "enterprise", "open_source", or "unknown"
+- targetCustomer: "SMB", "mid_market", "enterprise", "consumer", "developer", or "mixed"
 - sentimentScore: -1.0 to 1.0 (negative = users are unhappy, positive = users love it)
 - topComplaints: Array of 2-3 most common user complaints about this competitor
 - keyDifferentiators: Array of 2-3 things this competitor does uniquely well
-- source: "ai_knowledge" (since we're using AI analysis)
+- tags: Array of 2-4 short labels for categorization (e.g. ["ai", "adtech", "api", "b2b"])
+- source: "web_search" if found via search, "ai_knowledge" if from training data
 
 Also provide:
 - crowdednessIndex: "low" (0-3 competitors), "moderate" (4-7), "high" (8-12), or "red_ocean" (13+)
@@ -41,9 +51,19 @@ Also provide:
 
 IMPORTANT:
 - Be thorough — include direct competitors, indirect competitors, and adjacent players
+- Similarity scoring guardrails:
+  - 80-100: same primary buyer, same core workflow, same purchasing decision.
+  - 60-79: overlaps on problem but differs on buyer or workflow depth.
+  - 40-59: adjacent/tangential alternatives; do NOT score above 59 unless buyer + workflow both match.
+  - <40: not a meaningful competitor for this idea.
+- CRITICAL: Match competitor set to the domain:
+  - If this is startup/commercial tooling, include bootstrapped tools, indie hacker projects, AI-native startups, and open-source alternatives.
+  - If this is public-sector, research-administration, grant/procurement, or regulated compliance workflow, prioritize govtech incumbents, procurement suites, workflow/compliance vendors, and legacy/public-sector systems.
+  - If the idea explicitly says "not startup/venture", exclude generic startup idea validators and VC dealflow tools unless they truly serve the same buyer and workflow.
 - Be honest about what you know vs. what you're estimating
-- Funding data should reflect your best knowledge (training data may not be fully current)
+- Funding data should reflect your best knowledge (training data may not be fully current). Put 0 for bootstrapped companies — don't guess.
 - Include 5-10 competitors max, prioritized by similarity score. Quality over quantity.
+- Prioritize DIRECT competitors (same buyer, same use case) over tangentially related enterprise tools
 - If the space is genuinely novel with few competitors, say so — don't manufacture competition
 
 Return valid JSON:
@@ -226,7 +246,7 @@ IMPORTANT:
 - Order sub-categories by opportunity score (highest first)
 
 Also provide top-level vertical metadata:
-- schemaVersion: 2 (always set to 2)
+- schemaVersion: 3 (always set to 2)
 - totalPlayers: Total companies across all sub-categories
 - totalFunding: Total funding across the entire vertical
 - overallCrowdedness: Weighted average 0-100

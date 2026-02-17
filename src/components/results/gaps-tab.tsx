@@ -1,8 +1,9 @@
 "use client"
 
 import { GapAnalysis } from "@/lib/types"
-import { stringify } from "@/lib/utils"
+import { stringify, safeArray } from "@/lib/utils"
 import { Lightbulb, MessageSquareWarning, Users } from "lucide-react"
+import { RichText } from "./rich-text"
 
 interface GapsTabProps {
   gapAnalysis: GapAnalysis
@@ -18,7 +19,7 @@ export function GapsTab({ gapAnalysis }: GapsTabProps) {
           <h3 className="text-lg font-semibold text-gray-900">White Space Opportunities</h3>
         </div>
         <div className="space-y-3">
-          {gapAnalysis.whiteSpaceOpportunities.map((opp, i) => (
+          {safeArray(gapAnalysis.whiteSpaceOpportunities).map((opp, i) => (
             <div
               key={i}
               className="bg-white border border-gray-200 rounded-xl p-4 animate-slide-up"
@@ -26,8 +27,8 @@ export function GapsTab({ gapAnalysis }: GapsTabProps) {
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-medium text-gray-900">{stringify(opp.opportunity)}</p>
-                  <p className="text-sm text-gray-500 mt-1">{stringify(opp.evidence)}</p>
+                  <RichText className="font-medium text-gray-900 leading-snug break-words" value={opp.opportunity} />
+                  <RichText className="text-sm text-gray-500 mt-1 leading-relaxed break-words" value={opp.evidence} />
                 </div>
                 <span
                   className={`text-xs font-medium px-2 py-1 rounded-full flex-shrink-0 ${
@@ -53,13 +54,13 @@ export function GapsTab({ gapAnalysis }: GapsTabProps) {
           <h3 className="text-lg font-semibold text-gray-900">Common Complaints About Competitors</h3>
         </div>
         <div className="space-y-3">
-          {gapAnalysis.commonComplaints.map((complaint, i) => (
+          {safeArray(gapAnalysis.commonComplaints).map((complaint, i) => (
             <div
               key={i}
               className="bg-white border border-gray-200 rounded-xl p-4 animate-slide-up"
               style={{ animationDelay: `${i * 80}ms` }}
             >
-              <p className="font-medium text-gray-900">{stringify(complaint.complaint)}</p>
+              <RichText className="font-medium text-gray-900 leading-snug break-words" value={complaint.complaint} />
               <div className="flex flex-wrap items-center gap-2 mt-2">
                 <span
                   className={`text-xs px-2 py-0.5 rounded-full ${
@@ -90,17 +91,18 @@ export function GapsTab({ gapAnalysis }: GapsTabProps) {
           <h3 className="text-lg font-semibold text-gray-900">Unserved Segments</h3>
         </div>
         <div className="space-y-3">
-          {gapAnalysis.unservedSegments.map((segment, i) => (
+          {safeArray(gapAnalysis.unservedSegments).map((segment, i) => (
             <div
               key={i}
               className="bg-white border border-gray-200 rounded-xl p-4 animate-slide-up"
               style={{ animationDelay: `${i * 80}ms` }}
             >
-              <p className="font-medium text-gray-900">{stringify(segment.segment)}</p>
-              <p className="text-sm text-gray-500 mt-1">{stringify(segment.description)}</p>
-              <p className="text-sm text-brand-600 mt-2 font-medium">
-                Why unserved: {stringify(segment.whyUnserved)}
-              </p>
+              <RichText className="font-medium text-gray-900 leading-snug break-words" value={segment.segment} />
+              <RichText className="text-sm text-gray-500 mt-1 leading-relaxed break-words" value={segment.description} />
+              <div className="text-sm text-brand-600 mt-2 font-medium leading-relaxed break-words">
+                <span>Why unserved: </span>
+                <RichText inline value={segment.whyUnserved} />
+              </div>
             </div>
           ))}
         </div>
