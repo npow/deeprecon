@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "updatedAt": "2026-02-17",
+  "notes": "Seed mapping from external source categories into Recon vertical/category conventions.",
+  "sources": {
+    "ai-native-dev-landscape": {
+      "defaultVertical": "ai-ml",
+      "categoryMap": {
+        "Requirements": { "vertical": "devtools", "category": "Product & Requirements" },
+        "Prompting": { "vertical": "ai-ml", "category": "Prompt Tooling" },
+        "Terminal": { "vertical": "devtools", "category": "Developer Workflow" },
+        "Code": { "vertical": "devtools", "category": "AI Coding Tools" },
+        "Testing": { "vertical": "devtools", "category": "Testing & QA" },
+        "Quality Assurance": { "vertical": "devtools", "category": "Testing & QA" },
+        "Observability": { "vertical": "devtools", "category": "Observability" },
+        "Agents": { "vertical": "ai-ml", "category": "Agent Frameworks" },
+        "AIE": { "vertical": "ai-ml", "category": "AI Engineering" },
+        "Model": { "vertical": "ai-ml", "category": "Foundation Models" }
+      }
+    },
+    "awesome-ai-market-maps": {
+      "defaultVertical": "ai-ml",
+      "categoryMap": {
+        "AI Agents": { "vertical": "ai-ml", "category": "Agents" },
+        "AI Infrastructure": { "vertical": "ai-ml", "category": "Infrastructure" },
+        "AI Security": { "vertical": "cybersecurity", "category": "AI Security" },
+        "AI DevTools": { "vertical": "devtools", "category": "AI Developer Tools" },
+        "Fintech AI": { "vertical": "fintech", "category": "AI in Fintech" },
+        "Healthcare AI": { "vertical": "healthtech", "category": "AI in Healthcare" },
+        "Legaltech AI": { "vertical": "other", "category": "AI in LegalTech" },
+        "Voice AI": { "vertical": "ai-ml", "category": "Voice & Speech AI" }
+      }
+    },
+    "hf-ai-market-maps": {
+      "defaultVertical": "ai-ml",
+      "categoryMap": "use awesome-ai-market-maps mappings"
+    },
+    "cncf-landscape": {
+      "defaultVertical": "devtools",
+      "categoryMap": {
+        "Provisioning": { "vertical": "devtools", "category": "Infrastructure Provisioning" },
+        "Runtime": { "vertical": "devtools", "category": "Runtime Platforms" },
+        "Orchestration & Management": { "vertical": "devtools", "category": "Orchestration" },
+        "App Definition and Development": { "vertical": "devtools", "category": "Application Platforms" },
+        "Observability and Analysis": { "vertical": "devtools", "category": "Observability" },
+        "Serverless": { "vertical": "devtools", "category": "Serverless" },
+        "Wasm": { "vertical": "devtools", "category": "Wasm Ecosystem" },
+        "CNAI": { "vertical": "ai-ml", "category": "Cloud Native AI" }
+      },
+      "legalPolicy": {
+        "restrictedByDefault": true,
+        "notes": "CNCF landscape pages include Crunchbase terms text; treat as restricted until legal policy allows promotion."
+      }
+    }
+  }
+}

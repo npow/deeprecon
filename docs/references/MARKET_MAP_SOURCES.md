@@ -10,21 +10,21 @@ Owner: Platform
 - Format: YAML (`tools-data.yaml`)
 - License: MIT
 - Approx size: ~370 tools
-- Status: integrated in `scripts/import-sources.mjs`
+- Status: integrated in `scripts/import/ingest-sources.mjs`
 
 2. Awesome AI Market Maps
 - URL: https://github.com/joylarkin/Awesome-AI-Market-Maps
 - Format: CSV (`ai_market_maps.csv`)
 - License: MIT
 - Approx size: 398 rows (398 unique URLs)
-- Status: integrated in `scripts/import-sources.mjs`
+- Status: integrated in `scripts/import/ingest-sources.mjs`
 
 3. Hugging Face mirror (Joy Larkin)
 - URL: https://huggingface.co/datasets/joylarkin/2026AIMarketMaps
 - Format: CSV (`ai_market_maps19012026.csv`)
 - License: MIT
 - Approx size: 398 rows
-- Status: integrated in `scripts/import-sources.mjs`
+- Status: integrated in `scripts/import/ingest-sources.mjs`
 
 ## High-value (restricted / policy-gated)
 
@@ -33,7 +33,7 @@ Owner: Platform
 - Format: embedded JSON (`window.baseDS`)
 - Approx size: 2,332 items
 - Legal note: landscape includes Crunchbase terms text for usage; keep restricted until policy allows.
-- Status: integrated with `legal.restricted=true` in `scripts/import-sources.mjs`
+- Status: integrated with `legal.restricted=true` in `scripts/import/ingest-sources.mjs`
 
 5. Linux Foundation landscape network
 - Registry: https://github.com/cncf/landscapeapp/blob/master/landscapes.yml
