@@ -97,6 +97,16 @@ PGDATABASE=dbname
 When Postgres is configured, DeepRecon persists maps, DD scans, scan jobs, and feed data in Postgres.  
 When Postgres is not configured, it falls back to local JSON files under `data/`.
 
+Redis throttling (recommended for production):
+
+```bash
+REDIS_URL=redis://localhost:6379
+SCAN_REDIS_PREFIX=deeprecon
+SCAN_QUEUE_POLL_MS=250
+```
+
+With Redis configured, scan rate limits and queue throttling survive app restarts/deployments.
+
 ### Run
 
 ```bash
