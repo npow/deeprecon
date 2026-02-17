@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react"
 import Link from "next/link"
-import { Radar, Map as MapIcon, ArrowRight, Clock, TrendingUp, Rows3, LayoutGrid, GitBranch, ChevronDown, ChevronUp, RefreshCcw } from "lucide-react"
+import { Radar, Map as MapIcon, ArrowRight, Clock, TrendingUp, Rows3, LayoutGrid, GitBranch, ChevronDown, ChevronUp, RefreshCcw, Activity, AlertTriangle } from "lucide-react"
 import type { SavedScanSummary } from "@/lib/types"
 
 type FeedView = "cards" | "threads"
@@ -12,6 +12,22 @@ interface ThreadNode {
   scan: SavedScanSummary
   children: ThreadNode[]
   latestActivityTs: number
+}
+
+interface JobsHealthState {
+  total: number
+  counts: {
+    pending: number
+    running: number
+    completed: number
+    failed: number
+  }
+  staleThresholdMinutes: number
+  staleRunningJobs: Array<{
+    id: string
+    minutesSinceUpdate: number
+    stage: string
+  }>
 }
 
 function crowdednessBadgeColor(index: string) {
@@ -254,12 +270,21 @@ export default function ScansPage() {
   const [objective, setObjective] = useState<SortObjective>("latest")
   const [expandedThreads, setExpandedThreads] = useState<Set<string>>(new Set())
   const [rerunningIds, setRerunningIds] = useState<Set<string>>(new Set())
+  const [jobsHealth, setJobsHealth] = useState<JobsHealthState | null>(null)
+  const [isReapingJobs, setIsReapingJobs] = useState(false)
   const showDebugActions = process.env.NEXT_PUBLIC_DEBUG_MODE === "1"
 
   const loadScans = useCallback(async () => {
     const r = await fetch("/api/scans")
     const data = await r.json()
     setScans(data)
+  }, [])
+
+  const loadJobsHealth = useCallback(async () => {
+    const r = await fetch("/api/scan/jobs/health")
+    if (!r.ok) return
+    const data = await r.json() as JobsHealthState
+    setJobsHealth(data)
   }, [])
 
   const runBackgroundRerun = useCallback(async (scan: SavedScanSummary) => {
@@ -293,6 +318,7 @@ export default function ScansPage() {
         }
       }
       loadScans().catch(() => {})
+      loadJobsHealth().catch(() => {})
     } catch {
       // best-effort background action; keep feed usable even if one rerun fails
     } finally {
@@ -306,9 +332,34 @@ export default function ScansPage() {
 
   useEffect(() => {
     loadScans()
+      .then(() => loadJobsHealth())
       .catch(() => {})
       .finally(() => setLoading(false))
-  }, [loadScans])
+  }, [loadScans, loadJobsHealth])
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      loadJobsHealth().catch(() => {})
+    }, 10000)
+    return () => clearInterval(timer)
+  }, [loadJobsHealth])
+
+  const handleReapStaleJobs = useCallback(async () => {
+    if (!showDebugActions || isReapingJobs) return
+    setIsReapingJobs(true)
+    try {
+      await fetch("/api/scan/jobs/health", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ staleMinutes: 20 }),
+      })
+      await loadJobsHealth()
+    } catch {
+      // keep UI responsive even if cleanup endpoint fails
+    } finally {
+      setIsReapingJobs(false)
+    }
+  }, [isReapingJobs, loadJobsHealth, showDebugActions])
 
   const sortedScans = useMemo(() => {
     const out = [...scans]
@@ -450,6 +501,37 @@ export default function ScansPage() {
             </Link>
           </div>
         </div>
+
+        {jobsHealth && (
+          <div className="mb-5 rounded-xl border border-gray-200 bg-white px-4 py-3">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
+              <span className="inline-flex items-center gap-1.5 font-medium text-gray-800">
+                <Activity className="h-3.5 w-3.5" />
+                Scan Ops
+              </span>
+              <span>pending {jobsHealth.counts.pending}</span>
+              <span>running {jobsHealth.counts.running}</span>
+              <span>failed {jobsHealth.counts.failed}</span>
+              <span>completed {jobsHealth.counts.completed}</span>
+              {jobsHealth.staleRunningJobs.length > 0 && (
+                <span className="inline-flex items-center gap-1.5 rounded-md border border-orange-200 bg-orange-50 px-2 py-0.5 text-orange-700">
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  {jobsHealth.staleRunningJobs.length} stale running job(s)
+                </span>
+              )}
+              {showDebugActions && jobsHealth.staleRunningJobs.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleReapStaleJobs}
+                  disabled={isReapingJobs}
+                  className="inline-flex items-center gap-1 rounded-md border border-orange-300 bg-orange-50 px-2 py-0.5 font-medium text-orange-700 hover:bg-orange-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isReapingJobs ? "Reaping..." : "Reap Stale Jobs"}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="flex items-center justify-center py-20">

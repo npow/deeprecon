@@ -19,6 +19,22 @@ export interface SavedScanJob {
   error?: string
 }
 
+export interface ScanJobsHealthSummary {
+  total: number
+  counts: {
+    pending: number
+    running: number
+    completed: number
+    failed: number
+  }
+  staleThresholdMinutes: number
+  staleRunningJobs: Array<{
+    id: string
+    minutesSinceUpdate: number
+    stage: string
+  }>
+}
+
 const SCAN_JOBS_DIR = path.join(process.cwd(), "data", "scan-jobs")
 
 function ensureDir() {
@@ -74,4 +90,54 @@ export function updateScanJob(id: string, patch: Partial<SavedScanJob>): SavedSc
   }
   saveScanJob(next)
   return next
+}
+
+export function summarizeScanJobsHealth(staleMinutes: number = 20): ScanJobsHealthSummary {
+  const jobs = listScanJobs()
+  const now = Date.now()
+  const counts = { pending: 0, running: 0, completed: 0, failed: 0 }
+  const staleRunningJobs: ScanJobsHealthSummary["staleRunningJobs"] = []
+
+  for (const job of jobs) {
+    if (job.status in counts) counts[job.status as keyof typeof counts] += 1
+    if (job.status !== "running") continue
+    const updatedTs = new Date(job.updatedAt || job.createdAt).getTime()
+    const minutesSinceUpdate = Math.round((now - updatedTs) / 60000)
+    if (minutesSinceUpdate >= staleMinutes) {
+      staleRunningJobs.push({
+        id: job.id,
+        minutesSinceUpdate,
+        stage: job.currentStage || "unknown",
+      })
+    }
+  }
+
+  return {
+    total: jobs.length,
+    counts,
+    staleThresholdMinutes: staleMinutes,
+    staleRunningJobs,
+  }
+}
+
+export function reapStaleRunningJobs(staleMinutes: number = 20): number {
+  const jobs = listScanJobs()
+  const now = Date.now()
+  let reaped = 0
+
+  for (const job of jobs) {
+    if (job.status !== "running") continue
+    const updatedTs = new Date(job.updatedAt || job.createdAt).getTime()
+    const minutesSinceUpdate = (now - updatedTs) / 60000
+    if (minutesSinceUpdate < staleMinutes) continue
+    reaped += 1
+    updateScanJob(job.id, {
+      status: "failed",
+      error: `Stale running job reaped after ${Math.round(minutesSinceUpdate)} minutes without heartbeat`,
+      finishedAt: new Date().toISOString(),
+      currentStage: `${job.currentStage || "unknown"} (reaped)`,
+    })
+  }
+
+  return reaped
 }
