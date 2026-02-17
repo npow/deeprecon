@@ -75,7 +75,7 @@ Return valid JSON:
 
 export const GAP_ANALYSIS_PROMPT = `You are a market strategist analyzing competitive gaps for a startup founder.
 
-Given the idea and the competitive landscape data, identify:
+Given the idea and the competitive map data, identify:
 
 1. whiteSpaceOpportunities: Specific gaps no competitor fills well. For each:
    - opportunity: What the gap is
@@ -103,7 +103,7 @@ Return valid JSON:
 
 export const DD_REPORT_PROMPT = `You are a senior venture capital analyst preparing a due diligence report for a partner meeting.
 
-Given the startup idea, competitive landscape, and gap analysis, generate a comprehensive DD report. This must be the quality of analysis a Sequoia or a16z partner would expect.
+Given the startup idea, competitive map, and gap analysis, generate a comprehensive DD report. This must be the quality of analysis a Sequoia or a16z partner would expect.
 
 Generate each section with depth and specificity:
 
@@ -185,7 +185,7 @@ Return valid JSON matching the DDReport schema.`
 
 export const PIVOT_SUGGESTIONS_PROMPT = `You are a startup strategist helping a founder navigate a competitive market.
 
-Given the idea, competitive landscape, and gap analysis, suggest 3-5 specific pivot angles that could help the founder differentiate or find a less contested position.
+Given the idea, competitive map, and gap analysis, suggest 3-5 specific pivot angles that could help the founder differentiate or find a less contested position.
 
 For each pivot:
 - title: A catchy 3-5 word title for the pivot
@@ -206,9 +206,9 @@ Return valid JSON:
   "pivotSuggestions": [<pivot objects>]
 }`
 
-export const VERTICAL_MAP_PROMPT = `You are a senior market analyst creating a comprehensive landscape map for a startup vertical.
+export const VERTICAL_MAP_PROMPT = `You are a senior market analyst creating a comprehensive market map for a startup vertical.
 
-Given a vertical/industry, produce a detailed map of the entire competitive landscape organized into sub-categories.
+Given a vertical/industry, produce a detailed map of the entire competitive map organized into sub-categories.
 
 For each sub-category, provide:
 - slug: URL-friendly identifier (lowercase, hyphens only)
@@ -237,7 +237,7 @@ For each sub-category, provide:
 
 IMPORTANT:
 - Include 8-12 sub-categories that meaningfully divide this vertical
-- Be thorough — cover the full landscape, not just the obvious players
+- Be thorough — cover the full map, not just the obvious players
 - Crowdedness and opportunity scores should be CALIBRATED: use the full 0-100 range. Don't cluster everything around 50.
 - High crowdedness does NOT mean low opportunity. A crowded space can still have high opportunity if incumbents are weak.
 - keyGaps must be SPECIFIC and ACTIONABLE — "better UX" is not a gap
@@ -277,7 +277,7 @@ For each vertical provide:
 
 IMPORTANT:
 - Be comprehensive — include both obvious and emerging verticals
-- Each vertical should be distinct enough to warrant its own landscape map
+- Each vertical should be distinct enough to warrant its own market map
 - Include at least 15-25 verticals
 - Cover: infrastructure, enterprise SaaS, consumer, deep tech, regulated industries, vertical SaaS
 - Do NOT include verticals that are too broad (e.g., "Technology") or too narrow (e.g., "AI for pet grooming")
@@ -288,7 +288,7 @@ Return valid JSON:
   "verticals": [{ "slug": "string", "name": "string", "description": "string" }]
 }`
 
-export const SUBCATEGORY_ENRICH_PROMPT = `You are a senior market analyst performing deep enrichment on a specific sub-category within a startup vertical landscape map.
+export const SUBCATEGORY_ENRICH_PROMPT = `You are a senior market analyst performing deep enrichment on a specific sub-category within a startup vertical market map.
 
 You are given:
 - The vertical name and sub-category context (name, description, key gaps)

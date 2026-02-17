@@ -4,7 +4,7 @@ import { CheckCircle2, Circle, Loader2 } from "lucide-react"
 
 const STAGES = [
   { key: "intent", label: "Analyzing idea" },
-  { key: "competitors", label: "Scanning competitive landscape" },
+  { key: "competitors", label: "Scanning competitive map" },
   { key: "gaps", label: "Identifying market gaps" },
   { key: "dd_report", label: "Generating DD report & pivot strategies" },
 ]

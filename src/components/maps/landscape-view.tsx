@@ -35,9 +35,9 @@ export function LandscapeView({ map }: { map: VerticalMap }) {
   return (
     <div>
       <div className="mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">Landscape Map</h2>
+        <h2 className="text-lg font-semibold text-gray-900">Market Map</h2>
         <p className="text-xs text-gray-500 mt-0.5">
-          Dense market landscape grouped by mega-categories. Company chips include icons for faster visual scanning.
+          Dense market map grouped by mega-categories. Company chips include icons for faster visual scanning.
         </p>
       </div>
 

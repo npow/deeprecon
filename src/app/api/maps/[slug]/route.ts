@@ -193,7 +193,7 @@ export async function POST(
 
           await parallelResearch<MapGenResult>({
             systemPrompt: VERTICAL_MAP_PROMPT,
-            userMessage: `Generate a comprehensive landscape map for this vertical:\n\nVERTICAL: ${vertical.name}\nDESCRIPTION: ${vertical.description}`,
+            userMessage: `Generate a comprehensive market map for this vertical:\n\nVERTICAL: ${vertical.name}\nDESCRIPTION: ${vertical.description}`,
             providers,
             timeoutMs: 600_000,
             onStart: (provider) => {

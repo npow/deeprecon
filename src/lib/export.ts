@@ -28,8 +28,8 @@ export function exportToMarkdown(data: {
   lines.push(`---`)
   lines.push(``)
 
-  // Competitive Landscape
-  lines.push(`## Competitive Landscape`)
+  // Competitive Map
+  lines.push(`## Competitive Map`)
   lines.push(``)
   lines.push(`**Crowdedness:** ${crowdednessLabel(data.crowdednessIndex)} (${data.competitors.length} competitors)`)
   if (data.totalFunding > 0) {

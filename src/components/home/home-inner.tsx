@@ -725,7 +725,7 @@ export default function HomeInner() {
           <>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Running your recon</h2>
             <p className="text-sm text-gray-500 mb-8 max-w-sm text-center text-balance">
-              Analyzing competitive landscape and generating your DD report. This usually takes 1-2
+              Analyzing the competitive map and generating your DD report. This usually takes 1-2
               minutes.
             </p>
           </>
@@ -961,7 +961,7 @@ export default function HomeInner() {
         <div className="print-only">
           {competitors.length > 0 && (
             <div className="print-section">
-              <h2 className="text-xl font-bold text-gray-900 mb-4 print:text-lg">Competitive Landscape</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4 print:text-lg">Competitive Map</h2>
               <LandscapeTab
                 competitors={competitors}
                 crowdednessIndex={crowdednessIndex}

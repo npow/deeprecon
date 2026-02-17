@@ -38,7 +38,7 @@ const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
 
 try {
   await checkRoute(page, "/", "recon", true)
-  await checkRoute(page, "/maps", "providers", true)
+  await checkRoute(page, "/maps", "maps across startup verticals", true)
   // /scans has backend dependencies; keep visibility but avoid hard failure.
   await checkRoute(page, "/scans", "scan", false)
   console.log(`browser-smoke passed against ${baseUrl}`)

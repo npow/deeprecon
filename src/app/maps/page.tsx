@@ -85,7 +85,7 @@ export default function MapsPage() {
             </span>
           </h1>
           <p className="mt-3 text-gray-500 max-w-lg mx-auto text-balance">
-            Browse AI-generated landscape maps across startup verticals. See every player, funding
+            Browse maps across startup verticals. See every player, funding
             signal, and white-space opportunity. Click any gap to deep-dive.
           </p>
           {showDebugActions && (
@@ -129,7 +129,7 @@ export default function MapsPage() {
 
         <div className="mt-12 text-center">
           <p className="text-sm text-gray-400">
-            More verticals coming soon. Each landscape is AI-generated and fans out across all enabled providers.
+            More verticals are coming soon. New maps are added regularly.
           </p>
         </div>
       </main>
@@ -221,7 +221,7 @@ function VerticalCard({
               onClick={onGenerate}
               disabled={generating}
               className="inline-flex items-center justify-center p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-40"
-              title="Refresh landscape (uses all enabled providers)"
+              title="Refresh map"
             >
               {generating ? (
                 <Loader2 className="h-4 w-4 animate-spin text-brand-500" />
@@ -252,18 +252,18 @@ function VerticalCard({
             {generating ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Generating landscape...
+                Generating map...
               </>
             ) : (
               <>
                 <TrendingUp className="h-4 w-4" />
-                Generate Landscape
+                Generate Map
               </>
             )}
           </button>
           {generating && (
             <p className="text-xs text-gray-400 mt-2 text-center">
-              Fanning out to all enabled providers...
+              Updating map...
             </p>
           )}
         </>

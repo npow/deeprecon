@@ -22,7 +22,7 @@ export function PivotsTab({ pivots }: PivotsTabProps) {
   return (
     <div className="space-y-4 animate-fade-in">
       <p className="text-sm text-gray-500">
-        Based on the competitive landscape and identified gaps, here are strategic angles to
+        Based on the competitive map and identified gaps, here are strategic angles to
         differentiate or find a less contested position.
       </p>
 

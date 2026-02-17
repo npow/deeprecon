@@ -880,7 +880,7 @@ export async function generateVerticalMap(
 }> {
   const response = await callFirstSuccess(
     VERTICAL_MAP_PROMPT,
-    `Generate a comprehensive landscape map for this vertical:\n\nVERTICAL: ${verticalName}\nDESCRIPTION: ${verticalDescription}`,
+    `Generate a comprehensive market map for this vertical:\n\nVERTICAL: ${verticalName}\nDESCRIPTION: ${verticalDescription}`,
     65536,
     3
   )

@@ -20,7 +20,7 @@ type ViewId = "cards" | "landscape" | "quadrant" | "scatter" | "canvas"
 
 const VIEWS: { id: ViewId; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: "cards", label: "Cards", icon: LayoutGrid },
-  { id: "landscape", label: "Landscape", icon: Grid3X3 },
+  { id: "landscape", label: "Map", icon: Grid3X3 },
   { id: "quadrant", label: "Quadrant", icon: Target },
   { id: "scatter", label: "Scatter", icon: Circle },
   { id: "canvas", label: "Canvas", icon: Activity },

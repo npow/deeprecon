@@ -33,7 +33,7 @@ Ensure features are validated in a real browser path, not only unit tests.
   - Verify `Generate in Bolt` opens `bolt.new` in a new tab.
   - Exercise maps controls:
     - Provider picker controls (`AI Providers`, `Refresh provider list`, provider chips).
-    - `Refresh landscape`, `Turbo Populate All`, and refresh job drawer toggle.
+    - `Refresh map`, `Turbo Populate All`, and refresh job drawer toggle.
     - Open one vertical map (`/maps/:slug`), switch all map view tabs, and trigger `Refresh` and `Enrich All`.
     - Open one subcategory deep-dive action and verify navigation outcome.
   - Exercise scan feed controls:

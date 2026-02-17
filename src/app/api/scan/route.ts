@@ -80,7 +80,7 @@ async function executeScanRun(input: ScanRunInput): Promise<string> {
       onStage?.("competitors")
       send({
         type: "status_update",
-        data: { stage: "competitors", message: "Scanning competitive landscape..." },
+        data: { stage: "competitors", message: "Scanning competitive map..." },
       })
 
       const { competitors, crowdednessIndex, totalFundingInSpace } = await timed(
@@ -132,7 +132,7 @@ async function executeScanRun(input: ScanRunInput): Promise<string> {
         onStage?.("map_sync")
         send({
           type: "status_update",
-          data: { stage: "map_sync", message: "Syncing to landscape map..." },
+          data: { stage: "map_sync", message: "Syncing to market map..." },
         })
         await timed("scan.stage.map_sync", "stage", { stage: "map_sync" }, async () => {
           const mergeResult = await feedScanIntoMap(intent, competitors)
@@ -207,7 +207,7 @@ export async function POST(request: NextRequest) {
       || request.headers.get("x-real-ip")
       || "127.0.0.1"
     const rateLimiter = getRateLimiter()
-    const { allowed, retryAfterMs } = rateLimiter.check(ip)
+    const { allowed, retryAfterMs } = await rateLimiter.check(ip)
     if (!allowed) {
       const retryAfterSec = Math.ceil(retryAfterMs / 1000)
       return new Response(
@@ -242,7 +242,7 @@ export async function POST(request: NextRequest) {
       ideaText: idea,
       settings,
       remix,
-      queuePosition: scanQueue.queueLength,
+      queuePosition: await scanQueue.queueLength(),
     })
 
     void (async () => {
@@ -269,7 +269,7 @@ export async function POST(request: NextRequest) {
           finishedAt: new Date().toISOString(),
         })
       } finally {
-        scanQueue.release()
+        await scanQueue.release()
       }
     })()
 
@@ -281,7 +281,7 @@ export async function POST(request: NextRequest) {
 
   const stream = new ReadableStream({
     async start(controller) {
-      const queuePos = scanQueue.queueLength
+      const queuePos = await scanQueue.queueLength()
       if (queuePos > 0) {
         sendEvent(controller, encoder, {
           type: "queue_position",
@@ -314,7 +314,7 @@ export async function POST(request: NextRequest) {
           },
         })
       } finally {
-        scanQueue.release()
+        await scanQueue.release()
         try {
           controller.close()
         } catch {
