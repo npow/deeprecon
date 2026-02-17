@@ -547,6 +547,8 @@ export default function HomeInner() {
             {/* Input */}
             <div className="mt-8 bg-white rounded-2xl shadow-lg border border-gray-200 p-4">
               <textarea
+                id="idea-text"
+                name="ideaText"
                 ref={textareaRef}
                 value={ideaText}
                 onChange={(e) => setIdeaText(e.target.value)}

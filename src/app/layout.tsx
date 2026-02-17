@@ -8,6 +8,11 @@ export const metadata: Metadata = {
   title: "Recon — Know your competition before you build",
   description:
     "Get a VC-grade competitive analysis in under 5 minutes. Real data. Actionable strategy. Not another AI idea validator.",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
   openGraph: {
     title: "Recon — Know your competition before you build",
     description:
