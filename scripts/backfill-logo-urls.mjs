@@ -26,16 +26,20 @@ function normalizeWebsiteUrl(value) {
 }
 
 function deriveLogoUrl(websiteUrl, logoUrl) {
-  if (typeof logoUrl === "string" && logoUrl.trim()) return logoUrl.trim()
+  const existing = typeof logoUrl === "string" ? logoUrl.trim() : ""
+  if (
+    existing
+    && !existing.includes("google.com/s2/favicons")
+    && !existing.includes("gstatic.com/faviconV2")
+    && !existing.includes("icons.duckduckgo.com/ip3/")
+    && !existing.startsWith("/api/logo?")
+  ) {
+    return existing
+  }
+
   const normalized = normalizeWebsiteUrl(websiteUrl)
   if (!normalized) return null
-  try {
-    const host = new URL(normalized).hostname.toLowerCase().replace(/^www\./, "")
-    if (!host || host === "localhost") return null
-    return `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(host)}`
-  } catch {
-    return null
-  }
+  return `/api/logo?website=${encodeURIComponent(normalized)}`
 }
 
 function writeJsonAtomic(filePath, data) {

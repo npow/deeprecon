@@ -18,11 +18,26 @@ function fallbackColor(name: string): string {
   return `hsl(${hue} 45% 92%)`
 }
 
+function websiteHost(value?: string): string | undefined {
+  if (!value || !value.trim()) return undefined
+  const withProtocol = /^https?:\/\//i.test(value) ? value : `https://${value}`
+  try {
+    return new URL(withProtocol).hostname.replace(/^www\./, "")
+  } catch {
+    return undefined
+  }
+}
+
 function iconUrls(websiteUrl?: string, logoUrl?: string, size: number = 24): string[] {
   const urls: string[] = []
   if (logoUrl && logoUrl.trim()) urls.push(logoUrl.trim())
   if (websiteUrl && websiteUrl.trim()) {
+    urls.push(`/api/logo?website=${encodeURIComponent(websiteUrl.trim())}`)
     const faviconSize = Math.max(16, size * 2)
+    const host = websiteHost(websiteUrl)
+    if (host) {
+      urls.push(`https://icons.duckduckgo.com/ip3/${encodeURIComponent(host)}.ico`)
+    }
     urls.push(`https://www.google.com/s2/favicons?sz=${faviconSize}&domain_url=${encodeURIComponent(websiteUrl)}`)
   }
   return Array.from(new Set(urls))

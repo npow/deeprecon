@@ -28,14 +28,32 @@ function hostnameFromWebsiteUrl(websiteUrl?: string): string | undefined {
   }
 }
 
+function isGeneratedFaviconUrl(value?: string): boolean {
+  if (!value || typeof value !== "string") return false
+  const v = value.trim().toLowerCase()
+  return v.includes("google.com/s2/favicons")
+    || v.includes("gstatic.com/faviconv2")
+    || v.includes("icons.duckduckgo.com/ip3/")
+    || v.startsWith("/api/logo?")
+}
+
+function proxyLogoUrl(websiteUrl?: string): string | undefined {
+  const normalized = normalizeWebsiteUrl(websiteUrl)
+  if (!normalized) return undefined
+  return `/api/logo?website=${encodeURIComponent(normalized)}`
+}
+
 export function deriveLogoUrl(
   websiteUrl?: string,
   existingLogoUrl?: string,
 ): string | undefined {
-  if (existingLogoUrl && existingLogoUrl.trim()) return existingLogoUrl.trim()
+  const existing = existingLogoUrl?.trim()
+  if (existing && !isGeneratedFaviconUrl(existing)) return existing
+  const proxy = proxyLogoUrl(websiteUrl)
+  if (proxy) return proxy
   const host = hostnameFromWebsiteUrl(websiteUrl)
   if (!host) return undefined
-  return `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(host)}`
+  return `https://icons.duckduckgo.com/ip3/${encodeURIComponent(host)}.ico`
 }
 
 export function applyLogoToPlayer(player: SubCategoryPlayer): SubCategoryPlayer {
