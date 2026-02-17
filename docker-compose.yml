@@ -1,4 +1,18 @@
 services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    expose:
+      - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
   cliproxy:
     build:
       context: .
@@ -24,11 +38,19 @@ services:
     depends_on:
       cliproxy:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       - CLIPROXY_URL=http://cliproxy:8317
       - CLIPROXY_API_KEY=${CLIPROXY_API_KEY}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
-      - DATABASE_URL=${DATABASE_URL}
+      - PGHOST=${PGHOST}
+      - PGPORT=${PGPORT:-5432}
+      - PGUSER=${PGUSER}
+      - PGPASSWORD=${PGPASSWORD}
+      - PGDATABASE=${PGDATABASE:-postgres}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - SCAN_REDIS_PREFIX=${SCAN_REDIS_PREFIX:-deeprecon}
     volumes:
       - app-data:/app/data
     expose:
@@ -59,5 +81,6 @@ services:
 
 volumes:
   app-data:
+  redis-data:
   caddy-data:
   caddy-config:

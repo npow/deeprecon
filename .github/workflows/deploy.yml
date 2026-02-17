@@ -35,7 +35,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /root/recon
-            printf 'CLIPROXY_API_KEY=%s\nGEMINI_API_KEY=%s\nDOMAIN=%s\nDATABASE_URL=%s\n' '${{ secrets.CLIPROXY_API_KEY }}' '${{ secrets.GEMINI_API_KEY }}' '${{ secrets.DOMAIN }}' '${{ secrets.DATABASE_URL }}' > .env
+            printf '%s\n' 'CLIPROXY_API_KEY=${{ secrets.CLIPROXY_API_KEY }}' 'GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}' 'DOMAIN=${{ secrets.DOMAIN }}' 'PGHOST=${{ secrets.PGHOST }}' 'PGPORT=${{ secrets.PGPORT }}' 'PGUSER=${{ secrets.PGUSER }}' 'PGPASSWORD=${{ secrets.PGPASSWORD }}' 'PGDATABASE=${{ secrets.PGDATABASE }}' > .env
             git pull origin main
             docker compose up -d --build --remove-orphans
             docker image prune -f
