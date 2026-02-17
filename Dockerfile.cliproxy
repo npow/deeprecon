@@ -1,0 +1,19 @@
+# Stage 1: Build CLIProxyAPI from source
+FROM golang:1.23-alpine AS builder
+RUN apk add --no-cache git
+WORKDIR /src
+RUN git clone --branch npow/cursor --depth 1 https://github.com/npow/CLIProxyAPI.git .
+RUN CGO_ENABLED=0 GOOS=linux go build -o /cliproxy .
+
+# Stage 2: Minimal runtime
+FROM alpine:3.19 AS runner
+RUN apk add --no-cache ca-certificates
+RUN adduser -D -u 1001 cliproxy
+
+COPY --from=builder /cliproxy /usr/local/bin/cliproxy
+
+USER cliproxy
+
+EXPOSE 8317
+
+CMD ["cliproxy"]

@@ -1,0 +1,62 @@
+services:
+  cliproxy:
+    build:
+      context: .
+      dockerfile: Dockerfile.cliproxy
+    restart: unless-stopped
+    volumes:
+      - ./cliproxyapi.conf:/home/cliproxy/.config/cliproxyapi.conf:ro
+      - ${HOME}/.cli-proxy-api:/home/cliproxy/.cli-proxy-api:ro
+    expose:
+      - "8317"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8317/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 5s
+      retries: 3
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      cliproxy:
+        condition: service_healthy
+    environment:
+      - CLIPROXY_URL=http://cliproxy:8317
+      - CLIPROXY_API_KEY=${CLIPROXY_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+    volumes:
+      - app-data:/app/data
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      - DOMAIN=${DOMAIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  app-data:
+  caddy-data:
+  caddy-config:

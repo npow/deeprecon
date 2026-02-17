@@ -1,0 +1,15 @@
+node_modules
+.next
+.git
+.env
+.env.*
+!.env.production.example
+data/
+scripts/
+vitest.config.ts
+*.test.ts
+*.test.tsx
+.github
+Dockerfile*
+docker-compose.yml
+Caddyfile
