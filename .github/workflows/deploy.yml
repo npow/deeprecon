@@ -35,15 +35,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /root/recon
-
-            # Write env vars from secrets
-            cat > .env <<EOF
-            CLIPROXY_API_KEY=${{ secrets.CLIPROXY_API_KEY }}
-            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
-            DOMAIN=${{ secrets.DOMAIN }}
-            EOF
-
+            printf 'CLIPROXY_API_KEY=%s\nGEMINI_API_KEY=%s\nDOMAIN=%s\n' '${{ secrets.CLIPROXY_API_KEY }}' '${{ secrets.GEMINI_API_KEY }}' '${{ secrets.DOMAIN }}' > .env
             git pull origin main
-
             docker compose up -d --build --remove-orphans
             docker image prune -f
