@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react"
 import Link from "next/link"
 import { Radar, Map as MapIcon, ArrowRight, Clock, TrendingUp, Rows3, LayoutGrid, GitBranch, ChevronDown, ChevronUp, RefreshCcw, Activity, AlertTriangle } from "lucide-react"
 import type { SavedScanSummary } from "@/lib/types"
+import { stringify } from "@/lib/utils"
 import {
   crowdednessBadgeColor,
   gradeColor,
@@ -71,7 +72,7 @@ function ThreadScanCard({
                 </span>
               )}
               <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${crowdednessBadgeColor(scan.crowdednessIndex)}`}>
-                {scan.crowdednessIndex.replace("_", " ")}
+                {stringify(scan.crowdednessIndex).replace("_", " ")}
               </span>
               {typeof scan.lucrativenessScore === "number" && (
                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${lucrativenessBadgeColor(scan.lucrativenessTier)}`}>

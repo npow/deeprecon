@@ -42,7 +42,7 @@ export function exportToMarkdown(data: {
     lines.push(`${c.description}`)
     const details: string[] = []
     if (c.totalFundingUsd && c.totalFundingUsd > 0) details.push(`Funding: ${formatCurrency(c.totalFundingUsd)}`)
-    if (c.lastFundingType && c.lastFundingType !== "unknown") details.push(`Stage: ${c.lastFundingType.replace(/_/g, " ")}`)
+    if (c.lastFundingType && c.lastFundingType !== "unknown") details.push(`Stage: ${String(c.lastFundingType).replace(/_/g, " ")}`)
     if (c.employeeCountRange) details.push(`Team: ${c.employeeCountRange}`)
     if (details.length > 0) lines.push(`*${details.join(" | ")}*`)
     if (c.topComplaints.length > 0) {
@@ -64,7 +64,7 @@ export function exportToMarkdown(data: {
   lines.push(``)
   lines.push(`### Common Complaints`)
   for (const c of data.gapAnalysis.commonComplaints) {
-    lines.push(`- **${c.complaint}** (${c.frequency.replace(/_/g, " ")}): affects ${c.competitors.join(", ")}`)
+    lines.push(`- **${c.complaint}** (${String(c.frequency || "").replace(/_/g, " ")}): affects ${c.competitors.join(", ")}`)
   }
   lines.push(``)
   lines.push(`### Unserved Segments`)

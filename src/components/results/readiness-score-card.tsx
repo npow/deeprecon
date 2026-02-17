@@ -74,7 +74,7 @@ function RadarChart({ breakdown }: { breakdown: ReadinessScore["breakdown"] }) {
     return {
       x: cx + labelR * Math.cos(angle),
       y: cy + labelR * Math.sin(angle),
-      name: b.factor.replace("Competitive ", "Comp. "),
+      name: String(b.factor || "").replace("Competitive ", "Comp. "),
       pct: Math.round((b.score / b.max) * 100),
     }
   })

@@ -43,7 +43,7 @@ function heatmapText(ratio: number): string {
 // ── Funding parser (for sorting) ──────────────────────────────────────
 
 function parseFundingForSort(f: string): number {
-  if (!f) return 0
+  if (!f || typeof f !== "string") return 0
   const cleaned = f.replace(/[^0-9.BMKbmk]/g, "")
   const match = cleaned.match(/^([\d.]+)\s*([BMKbmk])?/)
   if (!match) return 0
@@ -59,6 +59,7 @@ function parseFundingForSort(f: string): number {
 // ── Stage chip labels ─────────────────────────────────────────────────
 
 function stageChipLabel(stage: string): string {
+  if (!stage || typeof stage !== "string") return "?"
   const s = stage.toLowerCase()
   if (s.includes("pre-seed") || s.includes("pre seed")) return "Pre"
   if (s.includes("seed")) return "Seed"
@@ -83,6 +84,7 @@ function stageChipLabel(stage: string): string {
 // ── Factor matching (word-overlap for fuzzy names) ────────────────────
 
 function extractWords(s: string): string[] {
+  if (!s || typeof s !== "string") return []
   return s.toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).filter((w) => w.length >= 3)
 }
 
