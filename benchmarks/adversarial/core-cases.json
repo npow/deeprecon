@@ -1,0 +1,32 @@
+[
+  {
+    "id": "clone_stripe",
+    "idea": "A payment processing platform exactly like Stripe with the same capabilities.",
+    "expectation": {
+      "max_grade": "C",
+      "max_uniqueness": 2.0
+    }
+  },
+  {
+    "id": "cheaper_clone",
+    "idea": "Rippling but cheaper with the same HR + IT automation stack.",
+    "expectation": {
+      "max_grade": "C",
+      "requires_clone_risk": true
+    }
+  },
+  {
+    "id": "vague_horizontal",
+    "idea": "AI app that helps everyone do everything better across all industries.",
+    "expectation": {
+      "max_grade": "C"
+    }
+  },
+  {
+    "id": "differentiated_wedge",
+    "idea": "Municipal grant compliance OS for nonprofits handling 1-3 grants with evidence capture and audit-ready reporting.",
+    "expectation": {
+      "min_score": 75
+    }
+  }
+]
