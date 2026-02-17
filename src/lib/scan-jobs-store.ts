@@ -8,6 +8,9 @@ export interface SavedScanJob {
   status: ScanJobStatus
   createdAt: string
   updatedAt: string
+  startedAt?: string
+  finishedAt?: string
+  currentStage?: string
   ideaText: string
   settings?: unknown
   remix?: unknown
@@ -26,6 +29,21 @@ function ensureDir() {
 
 function pathFor(id: string): string {
   return path.join(SCAN_JOBS_DIR, `${id}.json`)
+}
+
+export function listScanJobs(): SavedScanJob[] {
+  ensureDir()
+  const files = fs.readdirSync(SCAN_JOBS_DIR).filter((f) => f.endsWith(".json"))
+  const out: SavedScanJob[] = []
+  for (const file of files) {
+    try {
+      const row = JSON.parse(fs.readFileSync(path.join(SCAN_JOBS_DIR, file), "utf-8")) as SavedScanJob
+      out.push(row)
+    } catch {
+      // skip corrupt files
+    }
+  }
+  return out.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
 }
 
 export function saveScanJob(job: SavedScanJob): void {

@@ -54,10 +54,11 @@ type ScanRunInput = {
   remixType?: ScanRemixType
   remixLabel?: string
   emit?: ScanEmitter
+  onStage?: (stage: string) => void
 }
 
 async function executeScanRun(input: ScanRunInput): Promise<string> {
-  const { scanId, idea, settings, remixParentScanId, remixType, remixLabel, emit } = input
+  const { scanId, idea, settings, remixParentScanId, remixType, remixLabel, emit, onStage } = input
   const send = emit || (() => true)
 
   await runWithScanContext(scanId, async () => timed(
@@ -65,6 +66,7 @@ async function executeScanRun(input: ScanRunInput): Promise<string> {
     "scan",
     { route: "/api/scan", workflow_mode: settings.workflowMode, depth_level: settings.depthLevel },
     async () => {
+      onStage?.("intent")
       send({
         type: "status_update",
         data: { stage: "intent", message: "Analyzing your idea..." },
@@ -75,6 +77,7 @@ async function executeScanRun(input: ScanRunInput): Promise<string> {
       )
       send({ type: "intent_extracted", data: intent })
 
+      onStage?.("competitors")
       send({
         type: "status_update",
         data: { stage: "competitors", message: "Scanning competitive landscape..." },
@@ -93,6 +96,7 @@ async function executeScanRun(input: ScanRunInput): Promise<string> {
         data: { index: crowdednessIndex, totalFunding: totalFundingInSpace, count: competitors.length },
       })
 
+      onStage?.("gaps")
       send({
         type: "status_update",
         data: { stage: "gaps", message: "Identifying market gaps..." },
@@ -106,6 +110,7 @@ async function executeScanRun(input: ScanRunInput): Promise<string> {
         data: gapAnalysis,
       })
 
+      onStage?.("dd_report")
       send({
         type: "status_update",
         data: { stage: "dd_report", message: "Generating DD report & differentiation strategies..." },
@@ -124,6 +129,7 @@ async function executeScanRun(input: ScanRunInput): Promise<string> {
       send({ type: "pivots_generated", data: pivots })
 
       try {
+        onStage?.("map_sync")
         send({
           type: "status_update",
           data: { stage: "map_sync", message: "Syncing to landscape map..." },
@@ -141,6 +147,7 @@ async function executeScanRun(input: ScanRunInput): Promise<string> {
         console.error("Map sync error (non-fatal):", mapErr)
       }
 
+      onStage?.("persist")
       await timed("scan.stage.persist", "stage", { stage: "persist" }, async () => {
         const readinessScore = computeReadinessScore(ddReport, crowdednessIndex, competitors, gapAnalysis, idea)
         const lucrativenessScore = computeLucrativenessScore(ddReport, competitors, gapAnalysis)
@@ -241,7 +248,7 @@ export async function POST(request: NextRequest) {
     void (async () => {
       await scanQueue.acquire()
       try {
-        updateScanJob(jobId, { status: "running", queuePosition: 0 })
+        updateScanJob(jobId, { status: "running", queuePosition: 0, startedAt: new Date().toISOString(), currentStage: "queued" })
         await executeScanRun({
           scanId,
           idea,
@@ -249,13 +256,17 @@ export async function POST(request: NextRequest) {
           remixParentScanId,
           remixType,
           remixLabel,
+          onStage: (stage) => {
+            updateScanJob(jobId, { currentStage: stage })
+          },
         })
-        updateScanJob(jobId, { status: "completed", scanId })
+        updateScanJob(jobId, { status: "completed", scanId, finishedAt: new Date().toISOString(), currentStage: "done" })
       } catch (error) {
         console.error("Background scan pipeline error:", error)
         updateScanJob(jobId, {
           status: "failed",
           error: error instanceof Error ? error.message : "Unexpected error",
+          finishedAt: new Date().toISOString(),
         })
       } finally {
         scanQueue.release()
