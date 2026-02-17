@@ -94,6 +94,11 @@ export function crowdednessBgColor(index: string): string {
   }
 }
 
+/** Coerce any LLM value to a plain string — safe for .replace(), .toLowerCase(), etc. */
+export function safeStr(value: unknown): string {
+  return stringify(value)
+}
+
 /** Ensure a value is an array — guards against undefined/null from LLM responses */
 export function safeArray<T>(value: T[] | undefined | null): T[] {
   return Array.isArray(value) ? value : []

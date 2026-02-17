@@ -49,9 +49,14 @@ export async function POST(request: NextRequest) {
     })
   } catch (err) {
     if (err instanceof GeminiSessionError) {
-      return NextResponse.json({ error: err.message }, { status: 503 })
+      console.error("[pitch-deck] Session not configured:", err.message)
+      return NextResponse.json(
+        { error: "Pitch deck generation not available. Gemini session needs to be configured on the server.", setup_required: true },
+        { status: 503 }
+      )
     }
     if (err instanceof GeminiAPIError) {
+      console.error("[pitch-deck] Gemini API error:", err.status, err.message)
       const status = err.status === 429 ? 429 : 502
       return NextResponse.json({ error: err.message }, { status })
     }

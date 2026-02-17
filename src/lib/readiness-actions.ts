@@ -1,5 +1,5 @@
 import type { DDReport, Competitor, GapAnalysis, PivotSuggestion } from "./types"
-import { safeArray, flattenNumericKeys } from "./utils"
+import { safeArray, safeStr, flattenNumericKeys } from "./utils"
 import type { ReadinessScore } from "./readiness-score"
 
 export interface NextStep {
@@ -118,18 +118,18 @@ export function generateUniquenessSuggestions(
     const predictedMin = clamp(Math.round((predictedMostLikely - spread) * 10) / 10, 0, 5)
     const predictedMax = clamp(Math.round((predictedMostLikely + spread) * 10) / 10, 0, 5)
     const qualifier = hasSeg
-      ? `specifically for ${seg.segment.toLowerCase()}, with a core differentiator around ${gap.opportunity.toLowerCase()}`
-      : `with a core differentiator around ${gap.opportunity.toLowerCase()}`
+      ? `specifically for ${safeStr(seg.segment).toLowerCase()}, with a core differentiator around ${safeStr(gap.opportunity).toLowerCase()}`
+      : `with a core differentiator around ${safeStr(gap.opportunity).toLowerCase()}`
     const refinedIdeaText = mergeIdeaText(baseIdea, qualifier)
     const key = normalizedKey(refinedIdeaText)
     if (!key || seen.has(key)) continue
     seen.add(key)
     suggestions.push({
       id: `uniq-${suggestions.length + 1}`,
-      title: `Position around ${gap.opportunity}`,
+      title: `Position around ${safeStr(gap.opportunity)}`,
       whyItCouldWork: hasComplaint
-        ? `Targets a repeated competitor complaint: ${complaint.complaint}`
-        : gap.evidence,
+        ? `Targets a repeated competitor complaint: ${safeStr(complaint.complaint)}`
+        : safeStr(gap.evidence),
       refinedIdeaText,
       estimatedLift,
       predictedMin,
@@ -142,11 +142,11 @@ export function generateUniquenessSuggestions(
 
   if (suggestions.length === 0 && segments.length > 0) {
     const seg = segments[0]
-    const refinedIdeaText = mergeIdeaText(baseIdea, `built for ${seg.segment.toLowerCase()}`)
+    const refinedIdeaText = mergeIdeaText(baseIdea, `built for ${safeStr(seg.segment).toLowerCase()}`)
     suggestions.push({
       id: "uniq-fallback-segment",
-      title: `Niche down to ${seg.segment}`,
-      whyItCouldWork: seg.whyUnserved,
+      title: `Niche down to ${safeStr(seg.segment)}`,
+      whyItCouldWork: safeStr(seg.whyUnserved),
       refinedIdeaText,
       estimatedLift: 1.1,
       predictedMin: clamp(Math.round((currentUniqueness + 0.6) * 10) / 10, 0, 5),
@@ -188,36 +188,36 @@ export function generateNextSteps(
   if (grade === "A" && mvpReady) {
     steps.push(
       { action: "Validate with 10 customer interviews", detail: "Your fundamentals are strong. Start talking to real users to validate willingness to pay.", priority: "high" },
-      { action: "Build an MVP", detail: `Focus on your wedge: ${dd.wedgeStrategy?.wedge || "core differentiator"}.`, priority: "high" },
+      { action: "Build an MVP", detail: `Focus on your wedge: ${safeStr(dd.wedgeStrategy?.wedge) || "core differentiator"}.`, priority: "high" },
       { action: "Run a 2-week MVP test", detail: "Ship to a small cohort and track activation, retention, and conversion.", priority: "medium" },
     )
   } else if (grade === "B" && mvpReady) {
     steps.push(
-      { action: `Strengthen: ${weakest?.factor}`, detail: `This is your weakest area (${weakest?.score}/${weakest?.max}). ${weakest?.detail}.`, priority: "high" },
+      { action: `Strengthen: ${safeStr(weakest?.factor)}`, detail: `This is your weakest area (${weakest?.score}/${weakest?.max}). ${safeStr(weakest?.detail)}.`, priority: "high" },
       { action: "Build a thin MVP", detail: "Implement the smallest version of the wedge and validate one paid use case.", priority: "high" },
-      { action: "Test pricing with target customers", detail: `Validate pricing with: ${dd.idealCustomerProfile?.summary || "your ideal customers"}.`, priority: "medium" },
+      { action: "Test pricing with target customers", detail: `Validate pricing with: ${safeStr(dd.idealCustomerProfile?.summary) || "your ideal customers"}.`, priority: "medium" },
     )
   } else if (grade === "A" || grade === "B") {
     steps.push(
       { action: "Do not build full MVP yet", detail: "First validate problem urgency and positioning with 10-15 ICP interviews.", priority: "high" },
-      { action: `Fix: ${weakest?.factor}`, detail: `Your current blocker is ${weakest?.factor} (${weakest?.score}/${weakest?.max}).`, priority: "high" },
+      { action: `Fix: ${safeStr(weakest?.factor)}`, detail: `Your current blocker is ${safeStr(weakest?.factor)} (${weakest?.score}/${weakest?.max}).`, priority: "high" },
       { action: "Run a no-code smoke test", detail: "Use a landing page + outbound to validate demand before coding.", priority: "medium" },
     )
   } else if (grade === "C") {
     steps.push(
-      { action: `Fix: ${weakest?.factor}`, detail: `Critical weakness (${weakest?.score}/${weakest?.max}). Focus here first.`, priority: "high" },
-      { action: `Improve: ${secondWeakest?.factor}`, detail: `Second priority (${secondWeakest?.score}/${secondWeakest?.max}). ${secondWeakest?.detail}.`, priority: "high" },
+      { action: `Fix: ${safeStr(weakest?.factor)}`, detail: `Critical weakness (${weakest?.score}/${weakest?.max}). Focus here first.`, priority: "high" },
+      { action: `Improve: ${safeStr(secondWeakest?.factor)}`, detail: `Second priority (${secondWeakest?.score}/${secondWeakest?.max}). ${safeStr(secondWeakest?.detail)}.`, priority: "high" },
     )
     if (pivots.length > 0) {
-      steps.push({ action: `Consider pivot: ${pivots[0].title}`, detail: pivots[0].description, priority: "medium" })
+      steps.push({ action: `Consider pivot: ${safeStr(pivots[0].title)}`, detail: safeStr(pivots[0].description), priority: "medium" })
     }
     steps.push({ action: "Re-scan after changes", detail: "Make adjustments and run another analysis to track improvement.", priority: "low" })
   } else {
     if (pivots.length > 0) {
-      steps.push({ action: `Strongest pivot: ${pivots[0].title}`, detail: pivots[0].whyItWorks || pivots[0].description, priority: "high" })
+      steps.push({ action: `Strongest pivot: ${safeStr(pivots[0].title)}`, detail: safeStr(pivots[0].whyItWorks) || safeStr(pivots[0].description), priority: "high" })
     }
     steps.push(
-      { action: `Address #1 weakness: ${weakest?.factor}`, detail: `Score: ${weakest?.score}/${weakest?.max}. This must improve significantly.`, priority: "high" },
+      { action: `Address #1 weakness: ${safeStr(weakest?.factor)}`, detail: `Score: ${weakest?.score}/${weakest?.max}. This must improve significantly.`, priority: "high" },
       { action: "Talk to potential users before building", detail: "Validate the core problem exists and people would pay to solve it.", priority: "high" },
     )
   }
@@ -252,12 +252,12 @@ function generateDifferentiationSteps(
   const topGaps = highImpactGaps.length > 0 ? highImpactGaps : whiteSpaces
   if (topGaps.length > 0) {
     const top = topGaps[0]
-    const others = topGaps.slice(1, 3).map((g) => g.opportunity).join("; ")
-    const wedge = ddReport.wedgeStrategy?.wedge || "your core idea"
-    const refinedIdeaText = `${wedge}, specifically focused on ${top.opportunity.toLowerCase()}.`
+    const others = topGaps.slice(1, 3).map((g) => safeStr(g.opportunity)).join("; ")
+    const wedge = safeStr(ddReport.wedgeStrategy?.wedge) || "your core idea"
+    const refinedIdeaText = `${wedge}, specifically focused on ${safeStr(top.opportunity).toLowerCase()}.`
     steps.push({
-      action: `Differentiate via: ${top.opportunity}`,
-      detail: `${top.evidence}${others ? ` Also consider: ${others}.` : ""} Apply this angle and re-scan.`,
+      action: `Differentiate via: ${safeStr(top.opportunity)}`,
+      detail: `${safeStr(top.evidence)}${others ? ` Also consider: ${others}.` : ""} Apply this angle and re-scan.`,
       priority: "high",
       refinedIdeaText,
     })
@@ -266,11 +266,11 @@ function generateDifferentiationSteps(
   const segments = safeArray(gapAnalysis?.unservedSegments)
   if (segments.length > 0) {
     const top = segments[0]
-    const wedge = ddReport.wedgeStrategy?.wedge || "your core idea"
-    const refinedIdeaText = `${wedge}, built specifically for ${top.segment.toLowerCase()}.`
+    const wedge = safeStr(ddReport.wedgeStrategy?.wedge) || "your core idea"
+    const refinedIdeaText = `${wedge}, built specifically for ${safeStr(top.segment).toLowerCase()}.`
     steps.push({
-      action: `Niche down: target ${top.segment}`,
-      detail: `${top.description}. ${top.whyUnserved}. Apply this narrower focus and re-scan.`,
+      action: `Niche down: target ${safeStr(top.segment)}`,
+      detail: `${safeStr(top.description)}. ${safeStr(top.whyUnserved)}. Apply this narrower focus and re-scan.`,
       priority: "medium",
       refinedIdeaText,
     })
@@ -281,7 +281,7 @@ function generateDifferentiationSteps(
     .filter((c) => c.frequency === "very_common" || c.frequency === "common")
     .slice(0, 3)
   if (topComplaints.length > 0) {
-    const complaintList = topComplaints.map((c) => c.complaint).join("; ")
+    const complaintList = topComplaints.map((c) => safeStr(c.complaint)).join("; ")
     steps.push({
       action: "Solve what competitors won't",
       detail: `Users commonly complain about: ${complaintList}. Making these pain points your core focus is a strong differentiator.`,

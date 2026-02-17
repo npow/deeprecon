@@ -1,6 +1,7 @@
 "use client"
 
 import type { NextStep } from "@/lib/readiness-score"
+import { safeStr } from "@/lib/utils"
 import { ArrowRight, CheckCircle2, AlertCircle, Info } from "lucide-react"
 import { RichText } from "./rich-text"
 
@@ -35,11 +36,12 @@ function gradeHeading(grade: string): string {
   }
 }
 
-function parseLegacyUniquenessDetail(detail: string): ParsedLegacyUniqueness | null {
+function parseLegacyUniquenessDetail(detail: unknown): ParsedLegacyUniqueness | null {
+  const s = safeStr(detail)
   const splitToken = "Recommended sequence:"
-  if (!detail.includes(splitToken)) return null
+  if (!s.includes(splitToken)) return null
 
-  const [rawIntro, rawPlan] = detail.split(splitToken)
+  const [rawIntro, rawPlan] = s.split(splitToken)
   const intro = (rawIntro || "").trim()
   const plan = (rawPlan || "").trim()
   if (!plan) return null
@@ -58,7 +60,7 @@ function parseLegacyUniquenessDetail(detail: string): ParsedLegacyUniqueness | n
 }
 
 function isRescanStep(step: NextStep): boolean {
-  return /re-?scan/i.test(step.action) || /re-?scan/i.test(step.detail) || !!step.refinedIdeaText
+  return /re-?scan/i.test(safeStr(step.action)) || /re-?scan/i.test(safeStr(step.detail)) || !!step.refinedIdeaText
 }
 
 export function NextStepsCard({ steps, grade, onRescanStep, isRescanningStep = false }: NextStepsCardProps) {
@@ -74,7 +76,7 @@ export function NextStepsCard({ steps, grade, onRescanStep, isRescanningStep = f
       <div className="space-y-2">
         {orderedSteps.map((step, i) => (
           (() => {
-            const legacyUniqueness = step.action.toLowerCase().startsWith("strengthen: uniqueness")
+            const legacyUniqueness = safeStr(step.action).toLowerCase().startsWith("strengthen: uniqueness")
               ? parseLegacyUniquenessDetail(step.detail)
               : null
 

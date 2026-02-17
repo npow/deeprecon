@@ -24,8 +24,8 @@ interface DDReportTabProps {
   crowdednessIndex?: string
 }
 
-function forceLevelBadge(level: string, color: "red" | "orange" | "yellow" | "blue" | "purple"): string {
-  const normalized = level.toLowerCase()
+function forceLevelBadge(level: unknown, color: "red" | "orange" | "yellow" | "blue" | "purple"): string {
+  const normalized = String(level || "").toLowerCase()
   if (normalized === "high" || normalized === "intense") {
     switch (color) {
       case "red": return "bg-red-100 text-red-700"

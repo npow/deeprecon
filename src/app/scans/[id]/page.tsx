@@ -12,6 +12,7 @@ import { ReadinessScoreCard } from "@/components/results/readiness-score-card"
 import { DecisionHeader } from "@/components/results/decision-header"
 import { NextStepsCard } from "@/components/results/next-steps-card"
 import { LovableIcon, BoltIcon } from "@/components/results/builder-icons"
+import { ErrorBoundary } from "@/components/error-boundary"
 import { generateNextSteps, generateUniquenessSuggestions, type UniquenessSuggestion } from "@/lib/readiness-score"
 import { buildLandingPagePrompt, buildDeepLinks } from "@/lib/landing-page-gen"
 import { computeEvidenceConfidence } from "@/lib/evidence-confidence"
@@ -217,6 +218,7 @@ export default function ScanDetailPage() {
         </div>
 
         {/* Readiness Score */}
+        <ErrorBoundary>
         {scan.readinessScore && (
           <ReadinessScoreCard
             score={scan.readinessScore}
@@ -254,6 +256,7 @@ export default function ScanDetailPage() {
             />
           </div>
         )}
+        </ErrorBoundary>
 
         {/* Tabs */}
         <div className="border-b border-gray-200 mb-6">
@@ -278,6 +281,7 @@ export default function ScanDetailPage() {
         </div>
 
         {/* Tab content */}
+        <ErrorBoundary>
         {activeTab === "landscape" && scan.competitors.length > 0 && (
           <LandscapeTab
             competitors={scan.competitors}
@@ -291,6 +295,7 @@ export default function ScanDetailPage() {
           <DDReportTab ddReport={scan.ddReport} crowdednessIndex={scan.crowdednessIndex} />
         )}
         {activeTab === "pivots" && <PivotsTab pivots={scan.pivotSuggestions} />}
+        </ErrorBoundary>
 
       </main>
     </div>

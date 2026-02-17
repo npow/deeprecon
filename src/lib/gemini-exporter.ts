@@ -20,9 +20,20 @@ interface CookieJar {
 // ─── Cookie Management ───
 
 export function loadCookies(): CookieJar {
+  // Allow cookies via base64-encoded env var (for Docker/CI)
+  const envCookies = process.env.GEMINI_COOKIES_BASE64
+  if (envCookies) {
+    try {
+      const raw = JSON.parse(Buffer.from(envCookies, "base64").toString()) as CookieJar
+      if (raw.cookies && raw.cookies.length > 0) return raw
+    } catch {
+      // fall through to file-based loading
+    }
+  }
+
   if (!fs.existsSync(COOKIES_PATH)) {
     throw new GeminiSessionError(
-      "Gemini session not configured. Run `npm run gemini:login` to set up."
+      "Gemini session not configured. Set GEMINI_COOKIES_BASE64 env var or run `npm run gemini:login`."
     )
   }
   const raw = JSON.parse(fs.readFileSync(COOKIES_PATH, "utf-8")) as CookieJar

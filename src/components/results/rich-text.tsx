@@ -22,7 +22,7 @@ function promoteCommaSeparatedSentenceList(raw: string): string {
 function normalizeForMarkdown(raw: string): string {
   return raw
     .replace(/\r\n/g, "\n")
-    .replace(/^"(.*)"$/s, "$1")
+    .replace(/^"([\s\S]*)"$/, "$1")
     // Flatten artifacts from comma-joined sentence arrays: "foo., bar" -> "foo. bar"
     .replace(/([.!?])\s*,\s+/g, "$1 ")
     .replace(/([.!?])\1+(?=\s|$)/g, "$1")
