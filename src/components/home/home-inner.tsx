@@ -92,6 +92,8 @@ export default function HomeInner() {
   const [queuePosition, setQueuePosition] = useState<number | null>(null)
   const [scanSaved, setScanSaved] = useState(false)
   const [scanId, setScanId] = useState<string | null>(null)
+  const [rateLimitUntilMs, setRateLimitUntilMs] = useState<number | null>(null)
+  const [nowMs, setNowMs] = useState(() => Date.now())
   const [pendingUniquenessComparison, setPendingUniquenessComparison] = useState<{ suggestionTitle: string; before: number } | null>(null)
   const [uniquenessComparison, setUniquenessComparison] = useState<UniquenessComparison | null>(null)
   const [isExperimentingUniqueness, setIsExperimentingUniqueness] = useState(false)
@@ -139,6 +141,28 @@ export default function HomeInner() {
     [competitors, ddReport, gapAnalysis]
   )
 
+  useEffect(() => {
+    if (!rateLimitUntilMs) return
+    const id = window.setInterval(() => setNowMs(Date.now()), 1000)
+    return () => window.clearInterval(id)
+  }, [rateLimitUntilMs])
+
+  const retryAfterMs = useMemo(
+    () => (rateLimitUntilMs ? Math.max(rateLimitUntilMs - nowMs, 0) : 0),
+    [rateLimitUntilMs, nowMs]
+  )
+
+  const retryAfterLabel = useMemo(() => {
+    if (retryAfterMs <= 0) return ""
+    const totalSeconds = Math.ceil(retryAfterMs / 1000)
+    const hours = Math.floor(totalSeconds / 3600)
+    const minutes = Math.floor((totalSeconds % 3600) / 60)
+    const seconds = totalSeconds % 60
+    if (hours > 0) return `${hours}h ${minutes}m`
+    if (minutes > 0) return `${minutes}m ${seconds}s`
+    return `${seconds}s`
+  }, [retryAfterMs])
+
   // Pre-fill from ?idea= query param (deep dive from maps)
   useEffect(() => {
     const idea = searchParams.get("idea")
@@ -184,8 +208,16 @@ export default function HomeInner() {
     })
 
     if (!response.ok) {
-      const err = await response.json()
-      throw new Error(err.error || "Failed to start scan")
+      const err = await response.json().catch(() => ({}))
+      const message = err?.error || "Failed to start scan"
+      if (response.status === 429) {
+        const retryAfterSec = Number(response.headers.get("Retry-After") || "0")
+        const retryAfterMs = Number.isFinite(retryAfterSec) && retryAfterSec > 0
+          ? retryAfterSec * 1000
+          : 0
+        throw { kind: "rate_limited", message, retryAfterMs } as const
+      }
+      throw new Error(message)
     }
 
     const reader = response.body?.getReader()
@@ -288,6 +320,7 @@ export default function HomeInner() {
     setQueuePosition(null)
     setScanSaved(false)
     setScanId(null)
+    setRateLimitUntilMs(null)
 
     try {
       await executeScanStream(trimmedIdea, options, (event) => {
@@ -339,7 +372,20 @@ export default function HomeInner() {
         }
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred")
+      if (
+        err
+        && typeof err === "object"
+        && "kind" in err
+        && err.kind === "rate_limited"
+      ) {
+        const retryMs = "retryAfterMs" in err && typeof err.retryAfterMs === "number"
+          ? err.retryAfterMs
+          : 0
+        setRateLimitUntilMs(Date.now() + Math.max(retryMs, 0))
+        setError("You've hit your scan limit for now.")
+      } else {
+        setError(err instanceof Error ? err.message : "An unexpected error occurred")
+      }
       setAppState("error")
     }
   }, [executeScanStream])
@@ -492,6 +538,7 @@ export default function HomeInner() {
   const resetScan = () => {
     setAppState("landing")
     setError("")
+    setRateLimitUntilMs(null)
     setPendingUniquenessComparison(null)
     setUniquenessComparison(null)
     setIsExperimentingUniqueness(false)
@@ -740,14 +787,42 @@ export default function HomeInner() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4">
         <div className="max-w-md text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Something went wrong</h2>
-          <p className="text-sm text-red-600 mb-6">{error}</p>
-          <button
-            onClick={resetScan}
-            className="inline-flex items-center gap-2 bg-brand-600 text-white px-5 py-2.5 rounded-xl font-medium text-sm hover:bg-brand-700 transition-colors"
-          >
-            Try again
-          </button>
+          {rateLimitUntilMs ? (
+            <>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Scan limit reached</h2>
+              <p className="text-sm text-gray-600 mb-2">
+                You&apos;ve used all available scans for now.
+              </p>
+              <p className="text-sm text-brand-700 font-medium mb-6">
+                {retryAfterMs > 0 ? `Try again in ${retryAfterLabel}.` : "Try again shortly."}
+              </p>
+              <div className="flex items-center justify-center gap-2">
+                <button
+                  onClick={resetScan}
+                  className="inline-flex items-center gap-2 bg-brand-600 text-white px-5 py-2.5 rounded-xl font-medium text-sm hover:bg-brand-700 transition-colors"
+                >
+                  Back to Home
+                </button>
+                <Link
+                  href="/maps"
+                  className="inline-flex items-center gap-2 bg-white text-gray-700 border border-gray-200 px-5 py-2.5 rounded-xl font-medium text-sm hover:bg-gray-50 transition-colors"
+                >
+                  Browse Maps
+                </Link>
+              </div>
+            </>
+          ) : (
+            <>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Something went wrong</h2>
+              <p className="text-sm text-red-600 mb-6">{error}</p>
+              <button
+                onClick={resetScan}
+                className="inline-flex items-center gap-2 bg-brand-600 text-white px-5 py-2.5 rounded-xl font-medium text-sm hover:bg-brand-700 transition-colors"
+              >
+                Try again
+              </button>
+            </>
+          )}
         </div>
       </div>
     )

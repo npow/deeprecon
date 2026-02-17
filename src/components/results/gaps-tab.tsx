@@ -75,7 +75,7 @@ export function GapsTab({ gapAnalysis }: GapsTabProps) {
                 </span>
                 {(Array.isArray(complaint.competitors) ? complaint.competitors : []).map((comp, j) => (
                   <span key={j} className="text-xs text-gray-500 bg-gray-50 px-2 py-0.5 rounded-full">
-                    {stringify(comp)}
+                    <RichText inline value={comp} />
                   </span>
                 ))}
               </div>

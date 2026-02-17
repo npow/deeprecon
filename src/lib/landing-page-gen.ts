@@ -1,16 +1,24 @@
 import type { IntentExtraction, DDReport } from "./types"
-import { safeArray } from "./utils"
+import { safeArray, stringify } from "./utils"
 
 /**
  * Build a rich prompt for AI app generators from scan data.
  */
 export function buildLandingPagePrompt(intent: IntentExtraction, ddReport: DDReport): string {
   const ideaName = intent.oneLinerSummary || intent.keywords.join(" ")
-  const painPoints = safeArray(ddReport.idealCustomerProfile?.painPoints).slice(0, 3).join(", ")
-  const targetCustomer = ddReport.idealCustomerProfile?.summary || ddReport.idealCustomerProfile?.demographics || "startup founders"
-  const wedge = ddReport.wedgeStrategy?.wedge || ""
-  const pricing = ddReport.businessModel?.pricingStrategy || ""
-  const channels = safeArray(ddReport.goToMarket?.channels).map((c) => c.channel).slice(0, 3).join(", ")
+  const painPoints = safeArray(ddReport.idealCustomerProfile?.painPoints)
+    .slice(0, 3)
+    .map((p) => stringify(p).replace(/[.!?]+$/g, "").trim())
+    .filter(Boolean)
+    .join("; ")
+  const targetCustomer = stringify(
+    ddReport.idealCustomerProfile?.summary
+      || ddReport.idealCustomerProfile?.demographics
+      || "startup founders"
+  )
+  const wedge = stringify(ddReport.wedgeStrategy?.wedge || "")
+  const pricing = stringify(ddReport.businessModel?.pricingStrategy || "")
+  const channels = safeArray(ddReport.goToMarket?.channels).map((c) => stringify(c.channel)).slice(0, 3).join(", ")
 
   const prompt = `Build a modern, conversion-optimized landing page for a SaaS startup.
 

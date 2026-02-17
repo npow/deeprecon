@@ -102,7 +102,7 @@ export function DDReportTab({ ddReport: rawDdReport, crowdednessIndex }: DDRepor
                 key={i}
                 className="inline-block text-xs bg-red-50 text-red-700 px-2.5 py-1 rounded-full"
               >
-                {stringify(point)}
+                <RichText inline value={point} />
               </span>
             ))}
           </div>
@@ -213,7 +213,7 @@ export function DDReportTab({ ddReport: rawDdReport, crowdednessIndex }: DDRepor
                   <RichText className="text-xs text-gray-500 mt-0.5 leading-relaxed break-words" value={channel.rationale} />
                 </div>
                 <span className="text-xs font-medium text-gray-600 bg-white px-2 py-1 rounded-full border">
-                  CAC: {stringify(channel.estimatedCac)}
+                  CAC: <RichText inline value={channel.estimatedCac} />
                 </span>
               </div>
             </div>
@@ -327,7 +327,9 @@ export function DDReportTab({ ddReport: rawDdReport, crowdednessIndex }: DDRepor
               <span className="text-xs uppercase tracking-wider text-gray-400 font-medium">Currently Hired Solutions</span>
               <div className="flex flex-wrap gap-1.5 mt-1">
                 {ddReport.jobsToBeDone.currentHiredSolutions.map((s, i) => (
-                  <span key={i} className="text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full">{stringify(s)}</span>
+                  <span key={i} className="text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full">
+                    <RichText inline value={s} />
+                  </span>
                 ))}
               </div>
             </div>
@@ -337,7 +339,9 @@ export function DDReportTab({ ddReport: rawDdReport, crowdednessIndex }: DDRepor
               <span className="text-xs uppercase tracking-wider text-gray-400 font-medium">Underserved Outcomes</span>
               <div className="flex flex-wrap gap-1.5 mt-1">
                 {ddReport.jobsToBeDone.underservedOutcomes.map((o, i) => (
-                  <span key={i} className="text-xs bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full">{stringify(o)}</span>
+                  <span key={i} className="text-xs bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full">
+                    <RichText inline value={o} />
+                  </span>
                 ))}
               </div>
             </div>
