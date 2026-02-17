@@ -26,6 +26,7 @@ export default function MapsPage() {
   const [verticals, setVerticals] = useState<VerticalSummary[]>([])
   const [loading, setLoading] = useState(true)
   const prov = useProviders()
+  const showDebugActions = process.env.NEXT_PUBLIC_DEBUG_MODE === "1"
 
   const fetchVerticals = useCallback(async () => {
     const res = await fetch("/api/maps")
@@ -45,6 +46,7 @@ export default function MapsPage() {
   }, [fetchVerticals])
 
   function handleGenerate(slug: string, name: string) {
+    if (!showDebugActions) return
     refreshJobs.startRefresh(slug, name, Array.from(prov.enabledIds))
   }
 
@@ -86,16 +88,20 @@ export default function MapsPage() {
             Browse AI-generated landscape maps across startup verticals. See every player, funding
             signal, and white-space opportunity. Click any gap to deep-dive.
           </p>
-          <div className="mt-6">
-            <TurboPopulateButton onComplete={refreshVerticals} prov={prov} />
-          </div>
+          {showDebugActions && (
+            <div className="mt-6">
+              <TurboPopulateButton onComplete={refreshVerticals} prov={prov} />
+            </div>
+          )}
         </div>
       </div>
 
       {/* Provider picker (shared across turbo + per-card refresh) */}
-      <div className="max-w-5xl mx-auto w-full px-4 pt-6">
-        <ProviderPicker prov={prov} />
-      </div>
+      {showDebugActions && (
+        <div className="max-w-5xl mx-auto w-full px-4 pt-6">
+          <ProviderPicker prov={prov} />
+        </div>
+      )}
 
       {/* Verticals grid */}
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-8">
@@ -113,6 +119,7 @@ export default function MapsPage() {
                   key={v.slug}
                   vertical={v}
                   generating={generating}
+                  showDebugActions={showDebugActions}
                   onGenerate={() => handleGenerate(v.slug, v.name)}
                 />
               )
@@ -128,7 +135,7 @@ export default function MapsPage() {
       </main>
 
       {/* Refresh progress drawer */}
-      <RefreshJobsDrawer refreshJobs={refreshJobs} />
+      {showDebugActions && <RefreshJobsDrawer refreshJobs={refreshJobs} />}
     </div>
   )
 }
@@ -136,10 +143,12 @@ export default function MapsPage() {
 function VerticalCard({
   vertical,
   generating,
+  showDebugActions,
   onGenerate,
 }: {
   vertical: VerticalSummary
   generating: boolean
+  showDebugActions: boolean
   onGenerate: () => void
 }) {
   const icons: Record<string, string> = {
@@ -207,18 +216,20 @@ function VerticalCard({
             View Map
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
-          <button
-            onClick={onGenerate}
-            disabled={generating}
-            className="inline-flex items-center justify-center p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-40"
-            title="Refresh landscape (uses all enabled providers)"
-          >
-            {generating ? (
-              <Loader2 className="h-4 w-4 animate-spin text-brand-500" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
-            )}
-          </button>
+          {showDebugActions && (
+            <button
+              onClick={onGenerate}
+              disabled={generating}
+              className="inline-flex items-center justify-center p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-40"
+              title="Refresh landscape (uses all enabled providers)"
+            >
+              {generating ? (
+                <Loader2 className="h-4 w-4 animate-spin text-brand-500" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+            </button>
+          )}
         </div>
       </div>
     )
@@ -231,27 +242,33 @@ function VerticalCard({
       <h3 className="font-semibold text-gray-900 text-lg">{vertical.name}</h3>
       <p className="text-sm text-gray-500 mt-1 mb-6">{vertical.description}</p>
 
-      <button
-        onClick={onGenerate}
-        disabled={generating}
-        className="w-full inline-flex items-center justify-center gap-2 bg-brand-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors disabled:opacity-60"
-      >
-        {generating ? (
-          <>
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Generating landscape...
-          </>
-        ) : (
-          <>
-            <TrendingUp className="h-4 w-4" />
-            Generate Landscape
-          </>
-        )}
-      </button>
-      {generating && (
-        <p className="text-xs text-gray-400 mt-2 text-center">
-          Fanning out to all enabled providers...
-        </p>
+      {showDebugActions ? (
+        <>
+          <button
+            onClick={onGenerate}
+            disabled={generating}
+            className="w-full inline-flex items-center justify-center gap-2 bg-brand-600 text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors disabled:opacity-60"
+          >
+            {generating ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Generating landscape...
+              </>
+            ) : (
+              <>
+                <TrendingUp className="h-4 w-4" />
+                Generate Landscape
+              </>
+            )}
+          </button>
+          {generating && (
+            <p className="text-xs text-gray-400 mt-2 text-center">
+              Fanning out to all enabled providers...
+            </p>
+          )}
+        </>
+      ) : (
+        <div className="text-xs text-gray-400 text-center">Map not yet available</div>
       )}
     </div>
   )
