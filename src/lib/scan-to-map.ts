@@ -206,7 +206,7 @@ export async function feedScanIntoMap(
   if (!slug) return null
 
   // 2. Lock the map file and do read-modify-write atomically
-  return withMap(slug, (map) => {
+  return withMap(slug, async (map) => {
     if (!map) return null
 
     // 3. Match sub-category
@@ -236,7 +236,7 @@ export async function feedScanIntoMap(
     map.totalPlayers = map.subCategories.reduce((sum, sc) => sum + sc.playerCount, 0)
 
     // 8. Atomic save
-    saveMap(slug, map)
+    await saveMap(slug, map)
 
     return { slug, subCategory: subCat.name, newCount, updatedCount }
   })

@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
 
       try {
         // ── Phase 0: Vertical Discovery (optional) ──
-        let allVerticals: VerticalDefinition[] = loadVerticals()
+        let allVerticals: VerticalDefinition[] = await loadVerticals()
 
         if (discoverVerticals) {
           send("turbo_status", {
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
           const allDiscovered = results.flatMap((r) => r.data.verticals || [])
           const { merged, newCount } = mergeVerticals(allVerticals, allDiscovered)
           allVerticals = merged
-          saveVerticals(allVerticals)
+          await saveVerticals(allVerticals)
 
           send("discovery_complete", {
             totalVerticals: allVerticals.length,
@@ -215,7 +215,7 @@ export async function POST(request: NextRequest) {
               subCategories: mergedSubs,
             }
 
-            saveMap(vertical.slug, map)
+            await saveMap(vertical.slug, map)
 
             send("vertical_complete", {
               slug: vertical.slug,
@@ -293,7 +293,7 @@ export async function POST(request: NextRequest) {
                   }
 
                   totalNewPlayers += newCount
-                  saveMap(map.slug, map)
+                  await saveMap(map.slug, map)
                 }
 
                 enrichedCount++
@@ -316,7 +316,7 @@ export async function POST(request: NextRequest) {
           for (const map of maps) {
             map.totalPlayers = map.subCategories.reduce((s, sub) => s + sub.playerCount, 0)
             map.lastEnrichedAt = new Date().toISOString()
-            saveMap(map.slug, map)
+            await saveMap(map.slug, map)
           }
 
           send("turbo_status", {
@@ -359,7 +359,7 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   const available = await getAvailableProviders()
   const availableIds = new Set(available.map((p) => p.id))
-  const verticals = loadVerticals()
+  const verticals = await loadVerticals()
 
   return new Response(
     JSON.stringify({
@@ -377,12 +377,12 @@ export async function GET() {
           return a.label.localeCompare(b.label)
         }),
       availableCount: available.length,
-      verticals: verticals.map((v) => ({
+      verticals: await Promise.all(verticals.map(async (v) => ({
         slug: v.slug,
         name: v.name,
         description: v.description,
-        hasMap: !!loadMap(v.slug),
-      })),
+        hasMap: !!(await loadMap(v.slug)),
+      }))),
     }),
     { headers: { "Content-Type": "application/json" } },
   )

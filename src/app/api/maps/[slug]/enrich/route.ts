@@ -13,7 +13,8 @@ export async function POST(
 ) {
   const { slug } = await params
 
-  const vertical = loadVerticals().find((v) => v.slug === slug)
+  const verticals = await loadVerticals()
+  const vertical = verticals.find((v) => v.slug === slug)
   if (!vertical) {
     return new Response(JSON.stringify({ error: "Unknown vertical" }), {
       status: 404,
@@ -21,7 +22,7 @@ export async function POST(
     })
   }
 
-  const map = loadMap(slug)
+  const map = await loadMap(slug)
   if (!map) {
     return new Response(JSON.stringify({ error: "Map not generated yet" }), {
       status: 404,
@@ -114,7 +115,7 @@ export async function POST(
             }
 
             // Save after each subcategory for partial progress persistence
-            saveMap(slug, map)
+            await saveMap(slug, map)
 
             totalNew += newCount
             totalUpdated += updatedCount
@@ -136,7 +137,7 @@ export async function POST(
         // Update top-level stats
         map.totalPlayers = map.subCategories.reduce((sum, s) => sum + s.playerCount, 0)
         map.lastEnrichedAt = new Date().toISOString()
-        saveMap(slug, map)
+        await saveMap(slug, map)
 
         send("enrich_done", { totalNew, totalUpdated })
       } catch (err) {

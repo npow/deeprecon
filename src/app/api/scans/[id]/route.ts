@@ -8,7 +8,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const scan = loadScan(id)
+  const scan = await loadScan(id)
   if (!scan) {
     return NextResponse.json({ error: "Scan not found" }, { status: 404 })
   }

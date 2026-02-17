@@ -151,11 +151,11 @@ async function executeScanRun(input: ScanRunInput): Promise<string> {
       await timed("scan.stage.persist", "stage", { stage: "persist" }, async () => {
         const readinessScore = computeReadinessScore(ddReport, crowdednessIndex, competitors, gapAnalysis, idea)
         const lucrativenessScore = computeLucrativenessScore(ddReport, competitors, gapAnalysis)
-        const parentScan = remixParentScanId ? loadScan(remixParentScanId) : null
+        const parentScan = remixParentScanId ? await loadScan(remixParentScanId) : null
         const rootScanId = parentScan?.rootScanId ?? parentScan?.id
         const remixDepth = parentScan ? (parentScan.remixDepth ?? 0) + 1 : (remixParentScanId ? 1 : undefined)
 
-        saveScan({
+        await saveScan({
           id: scanId,
           ideaText: idea,
           intent,
@@ -234,7 +234,7 @@ export async function POST(request: NextRequest) {
     const scanId = generateId()
     const now = new Date().toISOString()
     const idea = ideaText.trim()
-    saveScanJob({
+    await saveScanJob({
       id: jobId,
       status: "pending",
       createdAt: now,
@@ -248,7 +248,7 @@ export async function POST(request: NextRequest) {
     void (async () => {
       await scanQueue.acquire()
       try {
-        updateScanJob(jobId, { status: "running", queuePosition: 0, startedAt: new Date().toISOString(), currentStage: "queued" })
+        await updateScanJob(jobId, { status: "running", queuePosition: 0, startedAt: new Date().toISOString(), currentStage: "queued" })
         await executeScanRun({
           scanId,
           idea,
@@ -257,13 +257,13 @@ export async function POST(request: NextRequest) {
           remixType,
           remixLabel,
           onStage: (stage) => {
-            updateScanJob(jobId, { currentStage: stage })
+            void updateScanJob(jobId, { currentStage: stage })
           },
         })
-        updateScanJob(jobId, { status: "completed", scanId, finishedAt: new Date().toISOString(), currentStage: "done" })
+        await updateScanJob(jobId, { status: "completed", scanId, finishedAt: new Date().toISOString(), currentStage: "done" })
       } catch (error) {
         console.error("Background scan pipeline error:", error)
-        updateScanJob(jobId, {
+        await updateScanJob(jobId, {
           status: "failed",
           error: error instanceof Error ? error.message : "Unexpected error",
           finishedAt: new Date().toISOString(),

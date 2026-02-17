@@ -1,15 +1,6 @@
-import fs from "fs"
-import path from "path"
 import { VerticalMap } from "./types"
 import { applyLogosToMap } from "./company-logo"
-
-const MAPS_DIR = path.join(process.cwd(), "data", "maps")
-
-function ensureDir() {
-  if (!fs.existsSync(MAPS_DIR)) {
-    fs.mkdirSync(MAPS_DIR, { recursive: true })
-  }
-}
+import { ensureDbSchema, getPool } from "./db"
 
 // ─── Per-slug mutex ───
 // Prevents concurrent read-modify-write cycles from clobbering each other.
@@ -42,7 +33,7 @@ export async function withMap<T>(
 ): Promise<T> {
   const release = await acquireLock(slug)
   try {
-    const map = loadMap(slug)
+    const map = await loadMap(slug)
     const result = await fn(map)
     return result
   } finally {
@@ -50,27 +41,45 @@ export async function withMap<T>(
   }
 }
 
-// ─── Atomic write ───
-// Write to temp file, then rename. Prevents corruption from crashes mid-write.
-
-export function saveMap(slug: string, data: VerticalMap): void {
-  ensureDir()
-  const filePath = path.join(MAPS_DIR, `${slug}.json`)
-  const tmpPath = `${filePath}.tmp`
-  fs.writeFileSync(tmpPath, JSON.stringify(applyLogosToMap(data), null, 2))
-  fs.renameSync(tmpPath, filePath)
+export async function saveMap(slug: string, data: VerticalMap): Promise<void> {
+  const normalized = applyLogosToMap(data)
+  await ensureDbSchema()
+  const pool = getPool()
+  await pool.query(
+    `
+    insert into maps (slug, payload, updated_at)
+    values ($1, $2::jsonb, now())
+    on conflict (slug) do update
+    set payload = excluded.payload,
+        updated_at = now()
+    `,
+    [slug, JSON.stringify(normalized)],
+  )
 }
 
-export function loadMap(slug: string): VerticalMap | null {
-  const filePath = path.join(MAPS_DIR, `${slug}.json`)
-  if (!fs.existsSync(filePath)) return null
-  return JSON.parse(fs.readFileSync(filePath, "utf-8"))
+export async function loadMap(slug: string): Promise<VerticalMap | null> {
+  await ensureDbSchema()
+  const pool = getPool()
+  const res = await pool.query<{ payload: VerticalMap }>(
+    "select payload from maps where slug = $1",
+    [slug],
+  )
+  if (res.rowCount && res.rows[0]) return res.rows[0].payload
+  return null
 }
 
-export function listGeneratedSlugs(): string[] {
-  ensureDir()
-  return fs
-    .readdirSync(MAPS_DIR)
-    .filter((f) => f.endsWith(".json"))
-    .map((f) => f.replace(".json", ""))
+export async function listGeneratedSlugs(): Promise<string[]> {
+  await ensureDbSchema()
+  const pool = getPool()
+  const res = await pool.query<{ slug: string }>("select slug from maps order by slug asc")
+  return res.rows.map((r) => r.slug)
+}
+
+export async function loadAllMaps(): Promise<VerticalMap[]> {
+  await ensureDbSchema()
+  const pool = getPool()
+  const res = await pool.query<{ payload: VerticalMap }>(
+    "select payload from maps order by slug asc",
+  )
+  return res.rows.map((r) => r.payload)
 }

@@ -15,5 +15,5 @@ This file is the top-level agent map for the repository. It points to the canoni
 ## Non-Negotiable Rules
 - Do not bypass quality gates.
 - Keep provider architecture aligned to `src/lib/provider-catalog.ts`.
-- Validate browser-visible behavior with `npm run test:browser` before merge windows.
+- Validate browser-visible behavior with `npm run test:browser` after every code change before handoff/merge.
 - Treat docs as code: update docs indexes and `Last reviewed` markers when behavior changes.

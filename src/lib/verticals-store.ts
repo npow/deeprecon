@@ -1,34 +1,48 @@
-import fs from "fs"
-import path from "path"
 import { VERTICALS, type VerticalDefinition } from "./types"
-
-const VERTICALS_FILE = path.join(process.cwd(), "data", "verticals.json")
-
-function ensureDir() {
-  const dir = path.dirname(VERTICALS_FILE)
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true })
-  }
-}
+import { ensureDbSchema, getPool } from "./db"
 
 /**
- * Load verticals from disk. Falls back to the hardcoded VERTICALS list
- * if no file exists yet (first run).
+ * Load verticals from Postgres. Falls back to the hardcoded VERTICALS list
+ * if no rows exist yet (first run).
  */
-export function loadVerticals(): VerticalDefinition[] {
-  if (fs.existsSync(VERTICALS_FILE)) {
-    return JSON.parse(fs.readFileSync(VERTICALS_FILE, "utf-8"))
-  }
+export async function loadVerticals(): Promise<VerticalDefinition[]> {
+  await ensureDbSchema()
+  const pool = getPool()
+  const res = await pool.query<VerticalDefinition>(
+    "select slug, name, description from verticals order by slug asc",
+  )
+  if (res.rowCount && res.rowCount > 0) return res.rows
+  await saveVerticals(VERTICALS)
   return VERTICALS
 }
 
 /**
- * Save verticals to disk. Merges new verticals with existing ones
+ * Save verticals to Postgres. Merges new verticals with existing ones
  * (deduplicating by slug), so discovered verticals accumulate over time.
  */
-export function saveVerticals(verticals: VerticalDefinition[]): void {
-  ensureDir()
-  fs.writeFileSync(VERTICALS_FILE, JSON.stringify(verticals, null, 2))
+export async function saveVerticals(verticals: VerticalDefinition[]): Promise<void> {
+  await ensureDbSchema()
+  const pool = getPool()
+  const client = await pool.connect()
+  try {
+    await client.query("begin")
+    await client.query("delete from verticals")
+    for (const v of verticals) {
+      await client.query(
+        `
+        insert into verticals (slug, name, description, updated_at)
+        values ($1, $2, $3, now())
+        `,
+        [v.slug, v.name, v.description],
+      )
+    }
+    await client.query("commit")
+  } catch (err) {
+    await client.query("rollback")
+    throw err
+  } finally {
+    client.release()
+  }
 }
 
 /**

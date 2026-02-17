@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server"
-import { listGeneratedSlugs, loadMap } from "@/lib/maps-store"
+import { loadAllMaps } from "@/lib/maps-store"
 import { loadVerticals } from "@/lib/verticals-store"
 
 export async function GET() {
-  const generated = listGeneratedSlugs()
-  const allVerticals = loadVerticals()
+  const maps = await loadAllMaps()
+  const mapBySlug = new Map(maps.map((m) => [m.slug, m]))
+  const allVerticals = await loadVerticals()
 
   const verticals = allVerticals.map((v) => {
-    const map = generated.includes(v.slug) ? loadMap(v.slug) : null
+    const map = mapBySlug.get(v.slug) || null
     return {
       ...v,
       generated: !!map,

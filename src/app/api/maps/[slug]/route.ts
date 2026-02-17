@@ -20,12 +20,13 @@ export async function GET(
 ) {
   const { slug } = await params
 
-  const vertical = loadVerticals().find((v) => v.slug === slug)
+  const verticals = await loadVerticals()
+  const vertical = verticals.find((v) => v.slug === slug)
   if (!vertical) {
     return NextResponse.json({ error: "Unknown vertical" }, { status: 404 })
   }
 
-  const map = loadMap(slug)
+  const map = await loadMap(slug)
   if (!map) {
     return NextResponse.json({ error: "Map not generated yet" }, { status: 404 })
   }
@@ -45,12 +46,12 @@ interface MapGenResult {
 }
 
 /** Merge a single provider's result into the existing map on disk and return updated stats */
-function mergeProviderIntoMap(
+async function mergeProviderIntoMap(
   slug: string,
   vertical: { name: string; description: string; slug: string },
   providerData: MapGenResult,
-): { totalPlayers: number; subCategories: number; previousPlayers: number; previousSubs: number } {
-  const existingMap = loadMap(slug)
+): Promise<{ totalPlayers: number; subCategories: number; previousPlayers: number; previousSubs: number }> {
+  const existingMap = await loadMap(slug)
   const previousPlayers = existingMap?.totalPlayers || 0
   const previousSubs = existingMap?.subCategories?.length || 0
 
@@ -102,7 +103,7 @@ function mergeProviderIntoMap(
     subCategories: mergedSubs,
   }
 
-  saveMap(slug, map)
+  await saveMap(slug, map)
   return { totalPlayers, subCategories: mergedSubs.length, previousPlayers, previousSubs }
 }
 
@@ -112,7 +113,8 @@ export async function POST(
 ) {
   const { slug } = await params
 
-  const vertical = loadVerticals().find((v) => v.slug === slug)
+  const verticals = await loadVerticals()
+  const vertical = verticals.find((v) => v.slug === slug)
   if (!vertical) {
     return new Response(JSON.stringify({ error: "Unknown vertical" }), {
       status: 404,
@@ -158,8 +160,9 @@ export async function POST(
   let providersUsed = 0
   let providersFailed = 0
   let latestStats = { totalPlayers: 0, subCategories: 0, previousPlayers: 0, previousSubs: 0 }
-  const startingPlayers = loadMap(slug)?.totalPlayers || 0
-  const startingSubs = loadMap(slug)?.subCategories?.length || 0
+  const startingMap = await loadMap(slug)
+  const startingPlayers = startingMap?.totalPlayers || 0
+  const startingSubs = startingMap?.subCategories?.length || 0
 
   const encoder = new TextEncoder()
   let streamDead = false
@@ -207,13 +210,13 @@ export async function POST(
                 tokens: progress.tokens,
               })
             },
-            onResult: (provider, data, durationMs) => {
+            onResult: async (provider, data, durationMs) => {
               const p = providers.find((pr) => pr.id === provider)
               const d = data as MapGenResult
               providersUsed++
 
               // Immediately merge this provider's data into the map on disk
-              latestStats = mergeProviderIntoMap(slug, vertical, d)
+              latestStats = await mergeProviderIntoMap(slug, vertical, d)
 
               send("provider_done", {
                 provider,
@@ -326,7 +329,7 @@ async function geminiRefreshFallback(
       ...result,
     }
 
-    saveMap(slug, map as VerticalMap)
+    await saveMap(slug, map as VerticalMap)
 
     send("refresh_complete", {
       totalPlayers: (result as MapGenResult).totalPlayers || 0,

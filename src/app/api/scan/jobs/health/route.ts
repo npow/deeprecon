@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
   const staleMinutesRaw = request.nextUrl.searchParams.get("staleMinutes")
   const staleMinutes = staleMinutesRaw ? Number(staleMinutesRaw) : 20
   const safeStaleMinutes = Number.isFinite(staleMinutes) && staleMinutes > 0 ? staleMinutes : 20
-  return NextResponse.json(summarizeScanJobsHealth(safeStaleMinutes))
+  return NextResponse.json(await summarizeScanJobsHealth(safeStaleMinutes))
 }
 
 export async function POST(request: NextRequest) {
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({})) as { staleMinutes?: number }
   const staleMinutes = Number(body?.staleMinutes)
   const safeStaleMinutes = Number.isFinite(staleMinutes) && staleMinutes > 0 ? staleMinutes : 20
-  const reaped = reapStaleRunningJobs(safeStaleMinutes)
-  const health = summarizeScanJobsHealth(safeStaleMinutes)
+  const reaped = await reapStaleRunningJobs(safeStaleMinutes)
+  const health = await summarizeScanJobsHealth(safeStaleMinutes)
   return NextResponse.json({ reaped, health })
 }
