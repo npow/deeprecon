@@ -173,8 +173,9 @@ export function flattenNumericKeys(raw: any): any {
 }
 
 /** Parse funding strings like "$3.8B", "$150M", "$2.4K" into numbers */
-export function parseFundingString(str: string | undefined | null): number {
-  if (!str) return 0
+export function parseFundingString(raw: unknown): number {
+  if (!raw) return 0
+  const str = typeof raw === "string" ? raw : String(raw)
   const cleaned = str.replace(/[^0-9.BMKbmk]/g, "")
   const match = cleaned.match(/^([\d.]+)\s*([BMKbmk])?/)
   if (!match) return 0
