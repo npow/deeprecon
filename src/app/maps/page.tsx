@@ -58,7 +58,7 @@ export default function MapsPage() {
           <div className="flex items-center gap-4">
             <Link href="/" className="flex items-center gap-2 hover:opacity-70 transition-opacity">
               <Radar className="h-5 w-5 text-brand-600" />
-              <span className="font-bold text-gray-900">Recon</span>
+              <span className="font-bold text-gray-900">DeepRecon</span>
             </Link>
             <span className="text-gray-300">|</span>
             <div className="flex items-center gap-1.5 text-sm font-medium text-gray-900">

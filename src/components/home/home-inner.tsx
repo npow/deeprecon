@@ -508,7 +508,7 @@ export default function HomeInner() {
           <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Radar className="h-5 w-5 text-brand-600" />
-              <span className="font-bold text-gray-900">Recon</span>
+              <span className="font-bold text-gray-900">DeepRecon</span>
             </div>
             <div className="flex items-center gap-3">
               <Link
@@ -663,7 +663,7 @@ export default function HomeInner() {
                   className="inline-flex items-center gap-2 bg-brand-600 text-white px-5 py-2.5 rounded-xl font-medium text-sm hover:bg-brand-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Search className="h-4 w-4" />
-                  Run Recon
+                  Run DeepRecon
                   <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
@@ -712,7 +712,7 @@ export default function HomeInner() {
       <div className="min-h-screen flex flex-col items-center justify-center px-4">
         <div className="flex items-center gap-2 mb-8">
           <Radar className="h-5 w-5 text-brand-600 animate-pulse" />
-          <span className="font-bold text-gray-900">Recon</span>
+          <span className="font-bold text-gray-900">DeepRecon</span>
         </div>
         {queuePosition !== null && queuePosition > 0 ? (
           <>
@@ -768,7 +768,7 @@ export default function HomeInner() {
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
           <button onClick={resetScan} className="flex items-center gap-2 hover:opacity-70 transition-opacity">
             <Radar className="h-5 w-5 text-brand-600" />
-            <span className="font-bold text-gray-900">Recon</span>
+            <span className="font-bold text-gray-900">DeepRecon</span>
           </button>
           <div className="flex items-center gap-2">
             {/* Share buttons */}

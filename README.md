@@ -1,6 +1,6 @@
 <div align="center">
 
-# Recon
+# DeepRecon
 
 **Competitive intelligence and market mapping for startup founders.**
 
@@ -12,9 +12,9 @@ See where the opportunities are before you build.
 
 ---
 
-## What is Recon?
+## What is DeepRecon?
 
-Recon is an AI-powered competitive intelligence platform that helps startup founders discover market opportunities and validate ideas. It pre-computes interactive landscape maps across startup verticals, scores white-space opportunities, and generates deep-dive due diligence reports.
+DeepRecon is an AI-powered competitive intelligence platform that helps startup founders discover market opportunities and validate ideas. It pre-computes interactive landscape maps across startup verticals, scores white-space opportunities, and generates deep-dive due diligence reports.
 
 **Two modes of use:**
 
@@ -80,6 +80,23 @@ ANTHROPIC_API_KEY=your-anthropic-api-key
 GEMINI_API_KEY=your-gemini-api-key
 ```
 
+Postgres persistence (recommended):
+
+```bash
+# Preferred
+DATABASE_URL=postgres://user:password@host:5432/dbname
+
+# Or standard PG* vars
+PGHOST=host
+PGPORT=5432
+PGUSER=user
+PGPASSWORD=password
+PGDATABASE=dbname
+```
+
+When Postgres is configured, DeepRecon persists maps, DD scans, scan jobs, and feed data in Postgres.  
+When Postgres is not configured, it falls back to local JSON files under `data/`.
+
 ### Run
 
 ```bash
@@ -122,8 +139,11 @@ src/
     │   ├── pipeline.ts               # AI orchestration functions
     │   └── prompts.ts                # System prompts
     ├── research.ts                   # Multi-provider parallel engine
-    ├── maps-store.ts                 # File-based map persistence
-    ├── verticals-store.ts            # Vertical registry
+    ├── db.ts                         # Postgres connection + schema bootstrap
+    ├── maps-store.ts                 # Map persistence (Postgres primary, file fallback)
+    ├── scans-store.ts                # DD scan + feed persistence
+    ├── scan-jobs-store.ts            # Scan job lifecycle persistence
+    ├── verticals-store.ts            # Vertical registry persistence
     ├── enrich.ts                     # Enrichment merge logic
     ├── types.ts                      # TypeScript interfaces
     └── utils.ts                      # Helpers
@@ -133,7 +153,8 @@ src/
 
 - **SSE streaming** on all generation endpoints — real-time progress from server to client
 - **Incremental merging** — each provider's results save immediately, no waiting for all to finish
-- **File-based storage** — maps stored as JSON in `/data/`, no database required
+- **Postgres-backed persistence** — maps, scans, feed summaries, and scan jobs persist in Postgres when configured
+- **Local file fallback** — JSON files under `/data/` are used only when DB env vars are not configured
 - **Parallel fanout** — single prompt sent to multiple LLM providers via OpenAI-compatible proxy, results deduplicated and merged
 
 ## Tech Stack

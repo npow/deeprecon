@@ -86,7 +86,7 @@
 
   /* Print header branding */
   main::before {
-    content: "Recon Report";
+    content: "DeepRecon Report";
     display: block;
     font-size: 24px;
     font-weight: 700;

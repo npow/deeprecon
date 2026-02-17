@@ -5,7 +5,7 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Recon — Know your competition before you build",
+  title: "DeepRecon — Know your competition before you build",
   description:
     "Get a VC-grade competitive analysis in under 5 minutes. Real data. Actionable strategy. Not another AI idea validator.",
   icons: {
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     apple: "/icon.svg",
   },
   openGraph: {
-    title: "Recon — Know your competition before you build",
+    title: "DeepRecon — Know your competition before you build",
     description:
       "Get a VC-grade competitive analysis in under 5 minutes. Real data. Actionable strategy.",
     type: "website",

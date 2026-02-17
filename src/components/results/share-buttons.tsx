@@ -11,7 +11,7 @@ interface ShareButtonsProps {
 
 function buildShareText(score: ReadinessScore, ideaText: string): string {
   const shortIdea = ideaText.length > 80 ? ideaText.slice(0, 77) + "..." : ideaText
-  return `My startup idea scored ${score.total}/100 (${score.grade} grade) on Recon!\n\n"${shortIdea}"\n\n${score.verdict}`
+  return `My startup idea scored ${score.total}/100 (${score.grade} grade) on DeepRecon!\n\n"${shortIdea}"\n\n${score.verdict}`
 }
 
 export function ShareButtons({ score, ideaText }: ShareButtonsProps) {
@@ -20,7 +20,7 @@ export function ShareButtons({ score, ideaText }: ShareButtonsProps) {
   const encodedText = encodeURIComponent(shareText)
 
   const twitterUrl = `https://twitter.com/intent/tweet?text=${encodedText}`
-  const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent("https://recon.dev")}`
+  const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent("https://deeprecon.com")}`
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(shareText)

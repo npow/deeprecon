@@ -346,7 +346,7 @@ export default function ScansPage() {
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 hover:opacity-70 transition-opacity">
             <Radar className="h-5 w-5 text-brand-600" />
-            <span className="font-bold text-gray-900">Recon</span>
+            <span className="font-bold text-gray-900">DeepRecon</span>
           </Link>
           <div className="flex items-center gap-3">
             <Link
@@ -472,12 +472,12 @@ export default function ScansPage() {
           <div className="text-center py-20">
             <Radar className="h-12 w-12 text-gray-300 mx-auto mb-4" />
             <h2 className="text-lg font-semibold text-gray-900 mb-2">No scans yet</h2>
-            <p className="text-sm text-gray-500 mb-6">Run your first recon to see it here.</p>
+            <p className="text-sm text-gray-500 mb-6">Run your first DeepRecon scan to see it here.</p>
             <Link
               href="/"
               className="inline-flex items-center gap-2 bg-brand-600 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-brand-700 transition-colors"
             >
-              Run Recon
+              Run DeepRecon
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
