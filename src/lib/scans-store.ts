@@ -3,6 +3,7 @@ import path from "path"
 import type { SavedScan, SavedScanSummary } from "./types"
 import { computeReadinessScore } from "./readiness-score"
 import { computeLucrativenessScore } from "./lucrativeness-score"
+import { applyLogosToCompetitors } from "./company-logo"
 
 const SCANS_DIR = path.join(process.cwd(), "data", "scans")
 
@@ -16,7 +17,10 @@ export function saveScan(scan: SavedScan): void {
   ensureDir()
   const filePath = path.join(SCANS_DIR, `${scan.id}.json`)
   const tmpPath = `${filePath}.tmp`
-  fs.writeFileSync(tmpPath, JSON.stringify(scan, null, 2))
+  fs.writeFileSync(
+    tmpPath,
+    JSON.stringify({ ...scan, competitors: applyLogosToCompetitors(scan.competitors) }, null, 2),
+  )
   fs.renameSync(tmpPath, filePath)
 }
 

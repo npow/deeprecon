@@ -1,6 +1,7 @@
 import fs from "fs"
 import path from "path"
 import { VerticalMap } from "./types"
+import { applyLogosToMap } from "./company-logo"
 
 const MAPS_DIR = path.join(process.cwd(), "data", "maps")
 
@@ -56,7 +57,7 @@ export function saveMap(slug: string, data: VerticalMap): void {
   ensureDir()
   const filePath = path.join(MAPS_DIR, `${slug}.json`)
   const tmpPath = `${filePath}.tmp`
-  fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2))
+  fs.writeFileSync(tmpPath, JSON.stringify(applyLogosToMap(data), null, 2))
   fs.renameSync(tmpPath, filePath)
 }
 

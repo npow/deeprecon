@@ -5,6 +5,7 @@ import { Search, ChevronUp, ChevronDown, LayoutGrid, Table2 } from "lucide-react
 import { stringify } from "@/lib/utils"
 import { type SubCategoryPlayer } from "@/lib/types"
 import { PlayerDetailCard, getStageColor } from "./player-detail-card"
+import { CompanyIcon } from "./company-icon"
 
 // ── Factor abbreviations ──────────────────────────────────────────────
 
@@ -277,6 +278,8 @@ export function PlayerHeatmap({ players, strategyCanvasFactors }: PlayerHeatmapP
       <div className="flex flex-wrap items-center gap-2 mb-4">
         {/* Show dropdown */}
         <select
+          id="players-show-filter"
+          name="playersShowFilter"
           value={showFilter}
           onChange={(e) => setShowFilter(e.target.value as ShowFilter)}
           className="text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-brand-500"
@@ -291,6 +294,8 @@ export function PlayerHeatmap({ players, strategyCanvasFactors }: PlayerHeatmapP
         <div className="relative flex-1 min-w-[180px] max-w-xs">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
           <input
+            id="players-search-query"
+            name="playersSearchQuery"
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -319,6 +324,8 @@ export function PlayerHeatmap({ players, strategyCanvasFactors }: PlayerHeatmapP
 
         {/* Sort dropdown */}
         <select
+          id="players-sort-key"
+          name="playersSortKey"
           value={sortKey}
           onChange={(e) => {
             setSortKey(e.target.value as SortKey)
@@ -452,7 +459,15 @@ export function PlayerHeatmap({ players, strategyCanvasFactors }: PlayerHeatmapP
                         className="px-3 text-xs font-medium text-gray-900 truncate"
                         title={stringify(player.oneLiner)}
                       >
-                        {stringify(player.name)}
+                        <span className="inline-flex items-center gap-1.5 min-w-0">
+                          <CompanyIcon
+                            name={stringify(player.name)}
+                            websiteUrl={player.websiteUrl}
+                            logoUrl={player.logoUrl}
+                            size={16}
+                          />
+                          <span className="truncate">{stringify(player.name)}</span>
+                        </span>
                       </td>
                       <td className="px-2">
                         {player.stage && (

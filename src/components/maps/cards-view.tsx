@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 import { stringify } from "@/lib/utils"
 import { type SubCategory } from "@/lib/types"
+import { CompanyIcon } from "@/components/maps/company-icon"
 
 export function CardsView({ subCategories, verticalSlug }: { subCategories: SubCategory[]; verticalSlug?: string }) {
   return (
@@ -116,10 +117,16 @@ function SubCategoryCard({ sub, index, verticalSlug }: { sub: SubCategory; index
             {sub.topPlayers.slice(0, 20).map((p, i) => (
               <span
                 key={i}
-                className="text-[11px] bg-gray-50 text-gray-700 px-2 py-0.5 rounded-full border border-gray-100"
+                className="inline-flex items-center gap-1 text-[11px] bg-gray-50 text-gray-700 px-2 py-0.5 rounded-full border border-gray-100"
                 title={`${stringify(p.oneLiner)} | ${stringify(p.funding)} (${stringify(p.stage)})`}
               >
-                {stringify(p.name)}
+                <CompanyIcon
+                  name={stringify(p.name)}
+                  websiteUrl={p.websiteUrl}
+                  logoUrl={p.logoUrl}
+                  size={14}
+                />
+                <span className="max-w-[120px] truncate">{stringify(p.name)}</span>
               </span>
             ))}
             {sub.topPlayers.length > 20 && (

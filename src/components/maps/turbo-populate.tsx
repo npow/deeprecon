@@ -180,6 +180,8 @@ export function TurboPopulateButton({ onComplete, prov: externalProv }: { onComp
           </button>
           <label className="inline-flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer select-none">
             <input
+              id="discover-new-verticals"
+              name="discoverNewVerticals"
               type="checkbox"
               checked={discover}
               onChange={(e) => setDiscover(e.target.checked)}
