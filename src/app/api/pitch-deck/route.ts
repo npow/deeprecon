@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { loadScan } from "@/lib/scans-store"
-import { generatePitchDeck } from "@/lib/pptx-generator"
+import { buildPitchDeckPrompt } from "@/lib/pitch-deck-prompt"
+import { generateSlidesUrl } from "@/lib/gemini-puppeteer"
+import { GeminiSessionError, GeminiAPIError } from "@/lib/gemini-exporter"
+
+export const maxDuration = 180
 
 export async function POST(request: NextRequest) {
   let body: { scanId?: string }
@@ -28,21 +32,23 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const pptxBuffer = await generatePitchDeck(scan)
+    const { prompt, title } = buildPitchDeckPrompt(scan)
+    const slidesUrl = await generateSlidesUrl(prompt, title)
 
-    const filename = `pitch-deck-${scanId.slice(0, 20)}.pptx`
-
-    return new NextResponse(new Uint8Array(pptxBuffer), {
-      status: 200,
-      headers: {
-        "Content-Type":
-          "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-        "Content-Disposition": `attachment; filename="${filename}"`,
-        "Content-Length": String(pptxBuffer.length),
-      },
-    })
+    return NextResponse.json({ slidesUrl })
   } catch (err) {
     console.error("[pitch-deck] Error generating pitch deck:", err)
+
+    if (err instanceof GeminiSessionError) {
+      return NextResponse.json({ error: err.message }, { status: 503 })
+    }
+    if (err instanceof GeminiAPIError) {
+      return NextResponse.json(
+        { error: err.message },
+        { status: err.status === 429 ? 429 : 503 }
+      )
+    }
+
     return NextResponse.json(
       { error: "Failed to generate pitch deck" },
       { status: 500 }

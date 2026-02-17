@@ -21,6 +21,11 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
+# Chromium for Puppeteer
+RUN apk add --no-cache chromium nss freetype harfbuzz ca-certificates ttf-freefont
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
@@ -28,6 +33,19 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
+
+# Copy puppeteer node_modules into standalone (not bundled by Next.js)
+COPY --from=builder /app/node_modules/puppeteer ./node_modules/puppeteer
+COPY --from=builder /app/node_modules/puppeteer-core ./node_modules/puppeteer-core
+COPY --from=builder /app/node_modules/@puppeteer ./node_modules/@puppeteer
+COPY --from=builder /app/node_modules/chromium-bidi ./node_modules/chromium-bidi
+COPY --from=builder /app/node_modules/devtools-protocol ./node_modules/devtools-protocol
+COPY --from=builder /app/node_modules/ws ./node_modules/ws
+COPY --from=builder /app/node_modules/debug ./node_modules/debug
+COPY --from=builder /app/node_modules/ms ./node_modules/ms
+COPY --from=builder /app/node_modules/mitt ./node_modules/mitt
+COPY --from=builder /app/node_modules/urlpattern-polyfill ./node_modules/urlpattern-polyfill
+COPY --from=builder /app/node_modules/zod ./node_modules/zod
 
 # Create data directory owned by nextjs user
 RUN mkdir -p /app/data && chown -R nextjs:nodejs /app/data

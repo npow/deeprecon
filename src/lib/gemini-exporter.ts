@@ -4,7 +4,7 @@ import path from "path"
 const COOKIES_PATH = path.join(process.cwd(), "data", "gemini-cookies.json")
 const GEMINI_BASE = "https://gemini.google.com"
 
-interface GeminiCookie {
+export interface GeminiCookie {
   name: string
   value: string
   domain: string
@@ -12,7 +12,7 @@ interface GeminiCookie {
   expires: number
 }
 
-interface CookieJar {
+export interface CookieJar {
   cookies: GeminiCookie[]
   updatedAt: string
 }

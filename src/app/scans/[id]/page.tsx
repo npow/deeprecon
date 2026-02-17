@@ -88,15 +88,12 @@ export default function ScanDetailPage() {
         alert(`Failed to generate pitch deck: ${err.error || res.statusText}`)
         return
       }
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = `pitch-deck-${id.slice(0, 20)}.pptx`
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-      URL.revokeObjectURL(url)
+      const { slidesUrl } = await res.json()
+      if (slidesUrl) {
+        window.open(slidesUrl, "_blank", "noopener,noreferrer")
+      } else {
+        alert("No Slides URL returned")
+      }
     } catch (err) {
       alert(`Failed to generate pitch deck: ${err instanceof Error ? err.message : "Unknown error"}`)
     } finally {
