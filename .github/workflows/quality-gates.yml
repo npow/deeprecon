@@ -7,7 +7,7 @@ on:
 
 jobs:
   quality:
-    name: Contracts + Policy + Build
+    name: Contracts + Policy + Browser + Build
     runs-on: ubuntu-latest
 
     steps:
@@ -20,6 +20,22 @@ jobs:
 
       - run: npm ci
       - run: npm run quality:contracts
+      - run: npm run docs:contracts
+      - run: npm run architecture:contracts
+      - run: npm run entropy:check
       - run: npm run test:policy
       - run: npm run test
       - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run start -- --port 3100 > /tmp/recon-server.log 2>&1 &
+      - run: |
+          for i in {1..40}; do
+            curl -sf http://127.0.0.1:3100 >/dev/null && exit 0
+            sleep 2
+          done
+          echo "server failed to start"
+          cat /tmp/recon-server.log
+          exit 1
+      - run: npm run test:browser
+        env:
+          BROWSER_BASE_URL: http://127.0.0.1:3100

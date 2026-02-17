@@ -6,10 +6,21 @@ const requiredFiles = [
   'docs/agent-contracts/OWNERSHIP.md',
   'docs/agent-contracts/PARALLEL_EXECUTION.md',
   'docs/agent-contracts/TASKBOARD.md',
+  'AGENTS.md',
+  'ARCHITECTURE.md',
+  'docs/INDEX.md',
+  'docs/references/HARNESS_LEARNINGS_CHECKLIST.md',
+  'docs/references/PROVIDER_MODEL.md',
+  'docs/references/BROWSER_VALIDATION.md',
+  'src/lib/provider-catalog.ts',
   'benchmarks/adversarial/core-cases.json',
   'scripts/lane-start.sh',
   'scripts/lane-stop.sh',
   'scripts/lane-status.sh',
+  'scripts/docs-contract-check.mjs',
+  'scripts/architecture-contract-check.mjs',
+  'scripts/entropy-check.mjs',
+  'scripts/browser-smoke.mjs',
 ]
 
 let failures = 0

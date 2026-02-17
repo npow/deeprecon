@@ -147,6 +147,16 @@ src/
 | Icons | [Lucide](https://lucide.dev) |
 | Language | TypeScript |
 
+## Harness Enforcement
+
+- Docs contracts: `npm run docs:contracts`
+- Architecture contracts: `npm run architecture:contracts`
+- Entropy guard: `npm run entropy:check`
+- Browser smoke validation: `npm run test:browser`
+- Autonomous iteration loop: `npm run iterate:autonomous`
+
+These gates are enforced in `.github/workflows/quality-gates.yml`.
+
 ## Roadmap
 
 - [ ] Auth + saved scans (Supabase)

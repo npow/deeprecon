@@ -1,5 +1,8 @@
 # Product Strategy (Agent-Driven)
 
+Last reviewed: 2026-02-17
+Owner: Product
+
 ## North Star
 Recon should be the fastest path from rough idea to decision-quality strategy, with scores that are realistic and action-driving.
 

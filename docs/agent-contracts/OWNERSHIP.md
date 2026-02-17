@@ -1,5 +1,8 @@
 # Ownership Map
 
+Last reviewed: 2026-02-17
+Owner: Platform
+
 ## Core Lanes
 - Lane A (`scoring-core`): `src/lib/readiness-score.ts`, `src/lib/lucrativeness-score.ts`, scoring tests.
 - Lane B (`orchestration`): `src/app/api/scan/route.ts`, `src/lib/scan-jobs-store.ts`, job lifecycle logic.

@@ -1,5 +1,8 @@
 # Parallel Execution Runbook
 
+Last reviewed: 2026-02-17
+Owner: Platform
+
 ## Fast Start
 1. Create lane worktree and server: `scripts/lane-start.sh <lane-id> [port]`
 2. Run lane-specific tasks/tests.

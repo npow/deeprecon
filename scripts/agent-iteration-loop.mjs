@@ -20,6 +20,9 @@ async function oneCycle() {
 
   const checks = [
     ['npm', ['run', 'quality:contracts']],
+    ['npm', ['run', 'docs:contracts']],
+    ['npm', ['run', 'architecture:contracts']],
+    ['npm', ['run', 'entropy:check']],
     ['npm', ['run', 'test:policy']],
     ['npm', ['test']],
   ]
@@ -31,6 +34,11 @@ async function oneCycle() {
 
   if (runLive) {
     const code = await run('node', ['scripts/adversarial-scan-check.mjs'])
+    if (code !== 0) return code
+  }
+
+  if (process.env.RUN_BROWSER_SMOKE === '1') {
+    const code = await run('npm', ['run', 'test:browser'])
     if (code !== 0) return code
   }
 

@@ -13,6 +13,8 @@
  *   })
  */
 
+import { runtimeProviders } from "@/lib/provider-catalog"
+
 // ─── Provider Configuration ───
 
 export interface ResearchProvider {
@@ -22,26 +24,12 @@ export interface ResearchProvider {
   maxTokens: number
 }
 
-export const DEFAULT_PROVIDERS: ResearchProvider[] = [
-  // Claude (best-in-class reasoning)
-  { id: "claude-opus-4-6", model: "claude-opus-4-6", label: "Claude Opus 4.6", maxTokens: 16384 },
-  { id: "claude-sonnet-4-5", model: "claude-sonnet-4-5-20250929", label: "Claude Sonnet 4.5", maxTokens: 16384 },
-  // OpenAI (different training data + reasoning)
-  { id: "gpt-5", model: "gpt-5", label: "GPT-5", maxTokens: 32768 },
-  { id: "gpt-5.2", model: "gpt-5.2", label: "GPT-5.2", maxTokens: 32768 },
-  // DeepSeek (strong open-source, different knowledge base)
-  { id: "deepseek-v3.2", model: "deepseek-v3.2", label: "DeepSeek V3.2", maxTokens: 16384 },
-  // Qwen (Alibaba — strong on intl/Asian companies)
-  { id: "qwen3-max", model: "qwen3-max", label: "Qwen 3 Max", maxTokens: 16384 },
-  // Kimi (Moonshot — different coverage)
-  { id: "kimi-k2.5", model: "kimi-k2.5", label: "Kimi K2.5", maxTokens: 16384 },
-  // GLM (Zhipu — strong on Chinese tech ecosystem)
-  { id: "glm-4.7", model: "glm-4.7", label: "GLM 4.7", maxTokens: 16384 },
-  // Gemini (Google — highest token limits, strong knowledge)
-  { id: "gemini-3-pro", model: "gemini-3-pro-preview", label: "Gemini 3 Pro", maxTokens: 65536 },
-  { id: "gemini-2.5-pro", model: "gemini-2.5-pro", label: "Gemini 2.5 Pro", maxTokens: 65536 },
-  { id: "gemini-2.5-flash", model: "gemini-2.5-flash", label: "Gemini 2.5 Flash", maxTokens: 65536 },
-]
+export const DEFAULT_PROVIDERS: ResearchProvider[] = runtimeProviders().map((p) => ({
+  id: p.id,
+  model: p.model,
+  label: p.label,
+  maxTokens: p.maxTokens,
+}))
 
 const CLIPROXY_BASE = process.env.CLIPROXY_URL || "http://localhost:8317"
 const CLIPROXY_KEY = process.env.CLIPROXY_API_KEY || "your-api-key-1"
@@ -96,6 +84,35 @@ export async function getAvailableProviders(): Promise<ResearchProvider[]> {
   return DEFAULT_PROVIDERS.filter((p) => models.has(p.model))
 }
 
+// ─── Web search tool config per provider ───
+
+/**
+ * Returns the appropriate web search tool config for a model.
+ * - Claude: web_search_20250305
+ * - Gemini: google_search
+ * - GPT/o-series: web_search (OpenAI Responses format)
+ * - Others (DeepSeek, Qwen, Kimi, GLM, Grok, etc.): no built-in web search support
+ */
+function getWebSearchTools(model: string): Record<string, unknown> {
+  // Strip cursor/ prefix to match the underlying model
+  const base = model.replace(/^cursor\//, "")
+
+  if (/^claude/i.test(base)) {
+    return { tools: [{ type: "web_search_20250305", name: "web_search" }] }
+  }
+  if (/^gemini/i.test(base)) {
+    return { tools: [{ type: "google_search" }] }
+  }
+  if (/^(gpt-|o[1-9])/i.test(base)) {
+    return { tools: [{ type: "web_search", search_context_size: "high" }] }
+  }
+  // Grok supports web search via OpenAI-compatible format
+  if (/^grok/i.test(base)) {
+    return { tools: [{ type: "web_search", search_context_size: "high" }] }
+  }
+  return {}
+}
+
 // ─── Low-level provider call ───
 
 export interface ProviderProgress {
@@ -116,6 +133,8 @@ async function callProvider(
   try {
     onProgress?.({ phase: "connecting", tokens: 0 })
 
+    const webSearchTools = getWebSearchTools(provider.model)
+
     const res = await fetch(`${CLIPROXY_BASE}/v1/chat/completions`, {
       method: "POST",
       headers: {
@@ -131,6 +150,7 @@ async function callProvider(
         max_tokens: provider.maxTokens,
         temperature: 0.3,
         stream: true,
+        ...webSearchTools,
       }),
       signal: controller.signal,
     })

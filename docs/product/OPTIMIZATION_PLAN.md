@@ -1,5 +1,8 @@
 # Autonomous Optimization Plan
 
+Last reviewed: 2026-02-17
+Owner: Product
+
 ## Decision Metrics
 - `clone_false_positive_rate`: % clone-like prompts scoring A/B (target: <= 5%).
 - `vague_false_positive_rate`: % vague prompts scoring A/B (target: <= 5%).

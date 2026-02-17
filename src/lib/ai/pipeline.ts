@@ -1,8 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
-import { jsonrepair } from "jsonrepair"
 import fs from "fs"
 import path from "path"
-import { flattenNumericKeys } from "@/lib/utils"
 import {
   IntentExtraction,
   Competitor,
@@ -25,6 +23,15 @@ import {
   SUBCATEGORY_ENRICH_PROMPT,
 } from "./prompts"
 import { timed } from "@/lib/telemetry"
+import { scanProviders } from "@/lib/provider-catalog"
+import {
+  sanitizeCompetitor,
+  finalizeCompetitorConfidence,
+  extractJSON,
+  sanitizeGapAnalysis,
+  sanitizeDDReport,
+  ddMissingFields,
+} from "./pipeline-sanitizers"
 
 // ─── Gemini SDK (kept for Google Search grounding) ───
 
@@ -45,15 +52,13 @@ interface ModelDef {
 // Models for scan pipeline via CLIProxy — diverse providers for broader competitor knowledge
 // Models with jsonMode: true get response_format: { type: "json_object" }
 // Others get "Respond with ONLY valid JSON" instruction + extractJSON parsing
-const SCAN_MODELS: ModelDef[] = [
-  { id: "gemini-3-flash", label: "Gem3Flash", maxTokens: 16384, jsonMode: true },
-  { id: "gemini-3-pro-high", label: "Gem3ProH", maxTokens: 16384 },
-  { id: "qwen3-235b-a22b-instruct", label: "Qwen3-235b", maxTokens: 16384 },
-  { id: "qwen3-max", label: "QwenMax", maxTokens: 16384 },
-  { id: "deepseek-v3.2-reasoner", label: "DSv3.2", maxTokens: 16384, jsonMode: true },
-  { id: "claude-opus-4-6", label: "Opus4.6", maxTokens: 16384 },
-  { id: "kimi-k2", label: "KimiK2", maxTokens: 16384 },
-]
+const JSON_MODE_MODELS = new Set(["gemini-3-flash", "deepseek-v3.2-reasoner"])
+const SCAN_MODELS: ModelDef[] = scanProviders().map((p) => ({
+  id: p.model,
+  label: p.label,
+  maxTokens: p.maxTokens,
+  ...(JSON_MODE_MODELS.has(p.model) ? { jsonMode: true } : {}),
+}))
 
 let modelIdx = 0
 function nextModel(): ModelDef {
@@ -516,142 +521,6 @@ async function fanOutCompetition(
 }
 
 // ─── Competitor sanitization ───
-
-function sanitizeCompetitor(raw: any): Competitor {
-  // Remove empty/invalid keys (e.g. "":"json" artifacts)
-  const cleaned: any = {}
-  for (const [k, v] of Object.entries(raw)) {
-    if (k && typeof k === "string" && k.length > 0) cleaned[k] = v
-  }
-  return {
-    ...cleaned,
-    name: cleaned.name || "Unknown",
-    description: cleaned.description || "",
-    similarityScore: typeof cleaned.similarityScore === "number" ? cleaned.similarityScore : 50,
-    topComplaints: Array.isArray(cleaned.topComplaints) ? cleaned.topComplaints : [],
-    keyDifferentiators: Array.isArray(cleaned.keyDifferentiators) ? cleaned.keyDifferentiators : [],
-    tags: Array.isArray(cleaned.tags) ? cleaned.tags : [],
-    source: cleaned.source || "ai_knowledge",
-    websiteStatus: cleaned.websiteStatus || "unknown",
-    websiteStatusReason: cleaned.websiteStatusReason || "",
-    confirmedBy: Array.isArray(cleaned.confirmedBy) ? cleaned.confirmedBy : [],
-    confirmedByCount: typeof cleaned.confirmedByCount === "number" ? cleaned.confirmedByCount : 0,
-    confidenceLevel: cleaned.confidenceLevel || "ai_inferred",
-  }
-}
-
-function finalizeCompetitorConfidence(competitors: Competitor[]): Competitor[] {
-  return competitors.map((c) => {
-    const confirmedBy = Array.isArray(c.confirmedBy) ? c.confirmedBy : []
-    const confirmedByCount = c.confirmedByCount ?? confirmedBy.length
-    const websiteStatus = c.websiteStatus || "unknown"
-    const websiteStatusReason = c.websiteStatusReason || ""
-    const confidenceLevel = websiteStatus === "verified"
-      ? "web_verified"
-      : confirmedByCount >= 2
-        ? "multi_confirmed"
-        : "ai_inferred"
-
-    return {
-      ...c,
-      confirmedBy,
-      confirmedByCount,
-      websiteStatus,
-      websiteStatusReason,
-      confidenceLevel,
-    }
-  })
-}
-
-// ─── JSON extraction ───
-
-function extractJSON(text: string): string {
-  const trimmed = text.trim()
-
-  // Fast path: already valid JSON
-  try {
-    JSON.parse(trimmed)
-    return trimmed
-  } catch {}
-
-  // Try jsonrepair on the full text
-  try {
-    const repaired = jsonrepair(trimmed)
-    JSON.parse(repaired)
-    return repaired
-  } catch {}
-
-  // Extract from markdown code blocks
-  const codeBlockMatch = trimmed.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/)
-  let raw = codeBlockMatch ? codeBlockMatch[1].trim() : null
-
-  if (!raw) {
-    const jsonMatch = trimmed.match(/[\[{][\s\S]*[\]}]/)
-    if (jsonMatch) raw = jsonMatch[0]
-  }
-
-  if (!raw) throw new Error("No JSON found in response")
-
-  const repaired = jsonrepair(raw)
-  JSON.parse(repaired) // validate
-  return repaired
-}
-
-// ─── Sanitizers: ensure LLM output matches expected shape ───
-
-function sanitizeGapAnalysis(raw: any): GapAnalysis {
-  return {
-    whiteSpaceOpportunities: Array.isArray(raw.whiteSpaceOpportunities) ? raw.whiteSpaceOpportunities : [],
-    commonComplaints: Array.isArray(raw.commonComplaints) ? raw.commonComplaints : [],
-    unservedSegments: Array.isArray(raw.unservedSegments) ? raw.unservedSegments : [],
-  }
-}
-
-
-function sanitizeDDReport(raw: any): DDReport {
-  const data = flattenNumericKeys(raw)
-  return {
-    ...data,
-    idealCustomerProfile: {
-      ...data.idealCustomerProfile,
-      painPoints: Array.isArray(data.idealCustomerProfile?.painPoints) ? data.idealCustomerProfile.painPoints : [],
-    },
-    goToMarket: {
-      ...data.goToMarket,
-      channels: Array.isArray(data.goToMarket?.channels) ? data.goToMarket.channels : [],
-    },
-    risksMitigations: Array.isArray(data.risksMitigations) ? data.risksMitigations : [],
-    strategyCanvas: data.strategyCanvas ? {
-      ...data.strategyCanvas,
-      competitiveFactors: Array.isArray(data.strategyCanvas.competitiveFactors) ? data.strategyCanvas.competitiveFactors : [],
-      blueOceanMoves: Array.isArray(data.strategyCanvas.blueOceanMoves) ? data.strategyCanvas.blueOceanMoves : [],
-    } : data.strategyCanvas,
-    jobsToBeDone: data.jobsToBeDone ? {
-      ...data.jobsToBeDone,
-      currentHiredSolutions: Array.isArray(data.jobsToBeDone.currentHiredSolutions) ? data.jobsToBeDone.currentHiredSolutions : [],
-      underservedOutcomes: Array.isArray(data.jobsToBeDone.underservedOutcomes) ? data.jobsToBeDone.underservedOutcomes : [],
-    } : data.jobsToBeDone,
-  }
-}
-
-function ddMissingFields(report: DDReport): string[] {
-  const missing: string[] = []
-  if (!String(report?.wedgeStrategy?.wedge || "").trim()) missing.push("wedgeStrategy.wedge")
-  if (!String(report?.wedgeStrategy?.whyThisWorks || "").trim()) missing.push("wedgeStrategy.whyThisWorks")
-  if (!String(report?.wedgeStrategy?.firstCustomers || "").trim()) missing.push("wedgeStrategy.firstCustomers")
-  if (!String(report?.wedgeStrategy?.expansionPath || "").trim()) missing.push("wedgeStrategy.expansionPath")
-  if (!String(report?.tamSamSom?.tam?.value || "").trim()) missing.push("tamSamSom.tam.value")
-  if (!String(report?.tamSamSom?.sam?.value || "").trim()) missing.push("tamSamSom.sam.value")
-  if (!String(report?.tamSamSom?.som?.value || "").trim()) missing.push("tamSamSom.som.value")
-  if (!String(report?.businessModel?.recommendedModel || "").trim()) missing.push("businessModel.recommendedModel")
-  if (!String(report?.businessModel?.pricingStrategy || "").trim()) missing.push("businessModel.pricingStrategy")
-  if (!String(report?.businessModel?.unitEconomics || "").trim()) missing.push("businessModel.unitEconomics")
-  if (!Array.isArray(report?.goToMarket?.channels) || report.goToMarket.channels.length === 0) missing.push("goToMarket.channels")
-  if (!Array.isArray(report?.risksMitigations) || report.risksMitigations.length === 0) missing.push("risksMitigations")
-  if (!String(report?.jobsToBeDone?.primaryJob || "").trim()) missing.push("jobsToBeDone.primaryJob")
-  if (!Array.isArray(report?.strategyCanvas?.blueOceanMoves) || report.strategyCanvas.blueOceanMoves.length === 0) missing.push("strategyCanvas.blueOceanMoves")
-  return missing
-}
 
 // ─── Pipeline stages ───
 
