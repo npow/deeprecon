@@ -19,6 +19,7 @@ import { runWithScanContext, timed } from "@/lib/telemetry"
 import { saveScanJob, updateScanJob } from "@/lib/scan-jobs-store"
 
 type ScanEmitter = (event: { type: string; data: unknown }) => boolean
+const MAX_LOGGED_IDEA_CHARS = 10_000
 
 function sendEvent(
   controller: ReadableStreamDefaultController,
@@ -46,6 +47,37 @@ function shouldBypassRateLimit(request: NextRequest): boolean {
   return process.env.NODE_ENV !== "production"
     || process.env.DISABLE_SCAN_RATE_LIMIT === "1"
     || request.headers.get("x-debug-mode") === "1"
+}
+
+function sanitizeIdeaForLog(value: unknown): string {
+  if (typeof value !== "string") return ""
+  const trimmed = value.trim()
+  if (trimmed.length <= MAX_LOGGED_IDEA_CHARS) return trimmed
+  return `${trimmed.slice(0, MAX_LOGGED_IDEA_CHARS)}…[truncated ${trimmed.length - MAX_LOGGED_IDEA_CHARS} chars]`
+}
+
+function scanLogMeta(args: {
+  scanId?: string
+  jobId?: string
+  mode: "stream" | "background"
+  ideaText: string
+  settings: ScanSettings
+  remixParentScanId?: string
+  remixType?: ScanRemixType
+  remixLabel?: string
+}) {
+  return {
+    scanId: args.scanId,
+    jobId: args.jobId,
+    mode: args.mode,
+    ideaLength: args.ideaText.length,
+    ideaText: sanitizeIdeaForLog(args.ideaText),
+    workflowMode: args.settings.workflowMode,
+    depthLevel: args.settings.depthLevel,
+    remixParentScanId: args.remixParentScanId,
+    remixType: args.remixType,
+    remixLabel: args.remixLabel,
+  }
 }
 
 type ScanRunInput = {
@@ -192,7 +224,21 @@ async function executeScanRun(input: ScanRunInput): Promise<string> {
 }
 
 export async function POST(request: NextRequest) {
-  const body = await request.json()
+  const rawBody = await request.text()
+  let body: any
+  try {
+    body = JSON.parse(rawBody)
+  } catch (error) {
+    console.error("Scan request rejected: invalid JSON body", {
+      error,
+      rawBodyPreview: rawBody.slice(0, MAX_LOGGED_IDEA_CHARS),
+      rawBodyLength: rawBody.length,
+    })
+    return new Response(JSON.stringify({ error: "Invalid request payload" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    })
+  }
   const { ideaText, settings: userSettings, remix, runInBackground } = body
   const settings: ScanSettings = { ...DEFAULT_SETTINGS, ...userSettings }
   const remixParentScanId =
@@ -206,6 +252,17 @@ export async function POST(request: NextRequest) {
       : undefined
 
   if (!ideaText || typeof ideaText !== "string" || ideaText.trim().length < 10) {
+    console.warn("Scan request rejected: invalid ideaText", {
+      mode: runInBackground === true ? "background" : "stream",
+      ideaType: typeof ideaText,
+      ideaLength: typeof ideaText === "string" ? ideaText.trim().length : 0,
+      ideaText: sanitizeIdeaForLog(ideaText),
+      workflowMode: settings.workflowMode,
+      depthLevel: settings.depthLevel,
+      remixParentScanId,
+      remixType,
+      remixLabel,
+    })
     return new Response(JSON.stringify({ error: "Please describe your idea in at least 10 characters" }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
@@ -244,6 +301,16 @@ export async function POST(request: NextRequest) {
     const scanId = generateId()
     const now = new Date().toISOString()
     const idea = ideaText.trim()
+    console.info("Scan request accepted", scanLogMeta({
+      scanId,
+      jobId,
+      mode: "background",
+      ideaText: idea,
+      settings,
+      remixParentScanId,
+      remixType,
+      remixLabel,
+    }))
     await saveScanJob({
       id: jobId,
       status: "pending",
@@ -272,7 +339,19 @@ export async function POST(request: NextRequest) {
         })
         await updateScanJob(jobId, { status: "completed", scanId, finishedAt: new Date().toISOString(), currentStage: "done" })
       } catch (error) {
-        console.error("Background scan pipeline error:", error)
+        console.error("Background scan pipeline error:", {
+          error,
+          ...scanLogMeta({
+            scanId,
+            jobId,
+            mode: "background",
+            ideaText: idea,
+            settings,
+            remixParentScanId,
+            remixType,
+            remixLabel,
+          }),
+        })
         await updateScanJob(jobId, {
           status: "failed",
           error: error instanceof Error ? error.message : "Unexpected error",
@@ -288,6 +367,16 @@ export async function POST(request: NextRequest) {
 
   const encoder = new TextEncoder()
   const scanId = generateId()
+  const idea = ideaText.trim()
+  console.info("Scan request accepted", scanLogMeta({
+    scanId,
+    mode: "stream",
+    ideaText: idea,
+    settings,
+    remixParentScanId,
+    remixType,
+    remixLabel,
+  }))
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -303,7 +392,7 @@ export async function POST(request: NextRequest) {
       try {
         await executeScanRun({
           scanId,
-          idea: ideaText.trim(),
+          idea,
           settings,
           remixParentScanId,
           remixType,
@@ -316,7 +405,18 @@ export async function POST(request: NextRequest) {
           data: { id: scanId },
         })
       } catch (error) {
-        console.error("Scan pipeline error:", error)
+        console.error("Scan pipeline error:", {
+          error,
+          ...scanLogMeta({
+            scanId,
+            mode: "stream",
+            ideaText: idea,
+            settings,
+            remixParentScanId,
+            remixType,
+            remixLabel,
+          }),
+        })
         sendEvent(controller, encoder, {
           type: "scan_error",
           data: {

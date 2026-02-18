@@ -18,6 +18,7 @@ import {
 import { stringify } from "@/lib/utils"
 import { type VerticalMap } from "@/lib/types"
 import { PlayerHeatmap } from "@/components/maps/player-heatmap"
+import { MapRenderBoundary } from "@/components/maps/map-render-boundary"
 import {
   EnrichProgressBanner,
   INITIAL_ENRICH_STATE,
@@ -305,10 +306,12 @@ export default function SubCategoryDetailPage() {
         <EnrichProgressBanner state={enrichState} />
 
         {sub.topPlayers.length > 0 ? (
-          <PlayerHeatmap
-            players={sub.topPlayers}
-            strategyCanvasFactors={map.strategyCanvasFactors}
-          />
+          <MapRenderBoundary>
+            <PlayerHeatmap
+              players={sub.topPlayers}
+              strategyCanvasFactors={map.strategyCanvasFactors}
+            />
+          </MapRenderBoundary>
         ) : (
           <div className="text-center py-12 text-gray-400">
             <p className="mb-2">No players catalogued yet.</p>
