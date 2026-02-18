@@ -1,6 +1,6 @@
 # Script Catalog
 
-Last reviewed: 2026-02-17
+Last reviewed: 2026-02-18
 Owner: Platform
 
 ## Purpose
@@ -22,6 +22,7 @@ Classify script entrypoints by operational role so one-off tooling does not mix 
 
 ## Experimental (non-production)
 - `scripts/experimental/`: ad-hoc model/debug experiments. Not part of CI and not expected to be stable.
+- `idea-space-pipeline/`: deterministic idea-space enumeration and candidate selection prototype for research coverage planning.
 
 ## Usage conventions
 - Add durable scripts to `package.json` if they are part of routine operations.
