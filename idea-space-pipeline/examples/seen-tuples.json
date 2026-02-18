@@ -1,0 +1,14 @@
+[
+  "domain=ai_safety|problem=reliability|method=benchmarking|evidence=benchmarks|population=enterprise_teams|geography=us|time_horizon=12_months|objective=gap_mapping",
+  "domain=healthcare_ai|problem=compliance|method=policy_analysis|evidence=regulations|population=hospitals|geography=us|time_horizon=3_years|objective=policy_recommendation",
+  {
+    "domain": "climate_tech",
+    "problem": "adoption",
+    "method": "market_sizing",
+    "evidence": "market_data",
+    "population": "startups",
+    "geography": "latam",
+    "time_horizon": "3_years",
+    "objective": "investment_thesis"
+  }
+]

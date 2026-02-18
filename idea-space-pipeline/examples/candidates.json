@@ -1,0 +1,189 @@
+{
+  "coverage": {
+    "taxonomyVersion": "v1",
+    "totalCellsBeforeConstraints": 14467005,
+    "validCellsAfterConstraints": 7550865,
+    "invalidCells": 6916140,
+    "seenCells": 0,
+    "seenCoveragePct": 0
+  },
+  "persistence": {
+    "dbEnabled": false,
+    "runId": null,
+    "seenFromFile": 0,
+    "seenFromDb": 0,
+    "reservedThisRun": 2
+  },
+  "ranking": {
+    "ranker": "heuristic",
+    "provider": null,
+    "model": null,
+    "shortlistLimit": 8,
+    "llmFailed": false,
+    "llmError": null
+  },
+  "selection": [
+    {
+      "rank": 1,
+      "id": "d9dd851e90350683",
+      "score": 0.8525,
+      "isCovered": false,
+      "key": "domain=healthcare_ai|problem=reliability|method=policy_analysis|evidence=regulations|population=enterprise_teams|geography=uk|time_horizon=6_months|objective=gap_mapping",
+      "ranker": {
+        "name": "heuristic",
+        "provider": null,
+        "model": null,
+        "llmScore": null,
+        "llmConfidence": null,
+        "llmReason": null,
+        "heuristicScore": null
+      },
+      "idea": {
+        "title": "Healthcare Ai Reliability in Uk (6 Months): Policy Analysis using Regulations",
+        "researchQuestion": "What are the highest-confidence reliability gaps for enterprise teams in healthcare ai across UK over the next 6 months, based on regulations and analyzed through policy analysis?",
+        "objective": "gap mapping",
+        "scope": {
+          "inScope": [
+            "healthcare ai initiatives affecting enterprise teams",
+            "UK market and policy context",
+            "6 months time-bounded developments",
+            "Evidence primarily from regulations"
+          ],
+          "outOfScope": [
+            "Purely speculative claims without evidence",
+            "Regions outside selected geography unless directly comparable",
+            "Long-horizon predictions beyond selected time horizon",
+            "Unverifiable anecdotes without source traceability"
+          ]
+        },
+        "evidencePlan": [
+          "Collect primary regulatory text, guidance notes, and enforcement updates.",
+          "Triangulate conflicting claims and annotate confidence per claim.",
+          "Prioritize sources with direct empirical or primary-text support."
+        ],
+        "deepResearchPrompt": "Produce a comprehensive survey for this structured idea cell:\nDomain: healthcare_ai\nProblem: reliability\nMethod: policy_analysis\nEvidence: regulations\nPopulation: enterprise_teams\nGeography: uk\nTime horizon: 6_months\nObjective: gap_mapping\nInclude evidence quality, conflicting claims, and a prioritized gap map with next-step questions."
+      },
+      "deepResearchTask": {
+        "key": "domain=healthcare_ai|problem=reliability|method=policy_analysis|evidence=regulations|population=enterprise_teams|geography=uk|time_horizon=6_months|objective=gap_mapping",
+        "rank": 1,
+        "title": "Healthcare Ai Reliability in Uk (6 Months): Policy Analysis using Regulations",
+        "researchQuestion": "What are the highest-confidence reliability gaps for enterprise teams in healthcare ai across UK over the next 6 months, based on regulations and analyzed through policy analysis?",
+        "prompt": "Produce a comprehensive survey for this structured idea cell:\nDomain: healthcare_ai\nProblem: reliability\nMethod: policy_analysis\nEvidence: regulations\nPopulation: enterprise_teams\nGeography: uk\nTime horizon: 6_months\nObjective: gap_mapping\nInclude evidence quality, conflicting claims, and a prioritized gap map with next-step questions.",
+        "context": {
+          "objective": "gap mapping",
+          "evidencePlan": [
+            "Collect primary regulatory text, guidance notes, and enforcement updates.",
+            "Triangulate conflicting claims and annotate confidence per claim.",
+            "Prioritize sources with direct empirical or primary-text support."
+          ],
+          "scope": {
+            "inScope": [
+              "healthcare ai initiatives affecting enterprise teams",
+              "UK market and policy context",
+              "6 months time-bounded developments",
+              "Evidence primarily from regulations"
+            ],
+            "outOfScope": [
+              "Purely speculative claims without evidence",
+              "Regions outside selected geography unless directly comparable",
+              "Long-horizon predictions beyond selected time horizon",
+              "Unverifiable anecdotes without source traceability"
+            ]
+          }
+        }
+      },
+      "record": {
+        "domain": "healthcare_ai",
+        "problem": "reliability",
+        "method": "policy_analysis",
+        "evidence": "regulations",
+        "population": "enterprise_teams",
+        "geography": "uk",
+        "time_horizon": "6_months",
+        "objective": "gap_mapping"
+      },
+      "prompt": "Produce a comprehensive survey for this structured idea cell:\nDomain: healthcare_ai\nProblem: reliability\nMethod: policy_analysis\nEvidence: regulations\nPopulation: enterprise_teams\nGeography: uk\nTime horizon: 6_months\nObjective: gap_mapping\nInclude evidence quality, conflicting claims, and a prioritized gap map with next-step questions."
+    },
+    {
+      "rank": 2,
+      "id": "d98e7d3d6f7976b4",
+      "score": 0.8525,
+      "isCovered": false,
+      "key": "domain=healthcare_ai|problem=evaluation|method=incident_analysis|evidence=production_incidents|population=hospitals|geography=eu|time_horizon=12_months|objective=gap_mapping",
+      "ranker": {
+        "name": "heuristic",
+        "provider": null,
+        "model": null,
+        "llmScore": null,
+        "llmConfidence": null,
+        "llmReason": null,
+        "heuristicScore": null
+      },
+      "idea": {
+        "title": "Healthcare Ai Evaluation in Eu (12 Months): Incident Analysis using Production Incidents",
+        "researchQuestion": "What are the highest-confidence evaluation gaps for hospitals in healthcare ai across EU over the next 12 months, based on production incidents and analyzed through incident analysis?",
+        "objective": "gap mapping",
+        "scope": {
+          "inScope": [
+            "healthcare ai initiatives affecting hospitals",
+            "EU market and policy context",
+            "12 months time-bounded developments",
+            "Evidence primarily from production incidents"
+          ],
+          "outOfScope": [
+            "Purely speculative claims without evidence",
+            "Regions outside selected geography unless directly comparable",
+            "Long-horizon predictions beyond selected time horizon",
+            "Unverifiable anecdotes without source traceability"
+          ]
+        },
+        "evidencePlan": [
+          "Collect postmortems, incident reports, outage writeups, and reliability retrospectives.",
+          "Triangulate conflicting claims and annotate confidence per claim.",
+          "Prioritize sources with direct empirical or primary-text support."
+        ],
+        "deepResearchPrompt": "Produce a comprehensive survey for this structured idea cell:\nDomain: healthcare_ai\nProblem: evaluation\nMethod: incident_analysis\nEvidence: production_incidents\nPopulation: hospitals\nGeography: eu\nTime horizon: 12_months\nObjective: gap_mapping\nInclude evidence quality, conflicting claims, and a prioritized gap map with next-step questions."
+      },
+      "deepResearchTask": {
+        "key": "domain=healthcare_ai|problem=evaluation|method=incident_analysis|evidence=production_incidents|population=hospitals|geography=eu|time_horizon=12_months|objective=gap_mapping",
+        "rank": 2,
+        "title": "Healthcare Ai Evaluation in Eu (12 Months): Incident Analysis using Production Incidents",
+        "researchQuestion": "What are the highest-confidence evaluation gaps for hospitals in healthcare ai across EU over the next 12 months, based on production incidents and analyzed through incident analysis?",
+        "prompt": "Produce a comprehensive survey for this structured idea cell:\nDomain: healthcare_ai\nProblem: evaluation\nMethod: incident_analysis\nEvidence: production_incidents\nPopulation: hospitals\nGeography: eu\nTime horizon: 12_months\nObjective: gap_mapping\nInclude evidence quality, conflicting claims, and a prioritized gap map with next-step questions.",
+        "context": {
+          "objective": "gap mapping",
+          "evidencePlan": [
+            "Collect postmortems, incident reports, outage writeups, and reliability retrospectives.",
+            "Triangulate conflicting claims and annotate confidence per claim.",
+            "Prioritize sources with direct empirical or primary-text support."
+          ],
+          "scope": {
+            "inScope": [
+              "healthcare ai initiatives affecting hospitals",
+              "EU market and policy context",
+              "12 months time-bounded developments",
+              "Evidence primarily from production incidents"
+            ],
+            "outOfScope": [
+              "Purely speculative claims without evidence",
+              "Regions outside selected geography unless directly comparable",
+              "Long-horizon predictions beyond selected time horizon",
+              "Unverifiable anecdotes without source traceability"
+            ]
+          }
+        }
+      },
+      "record": {
+        "domain": "healthcare_ai",
+        "problem": "evaluation",
+        "method": "incident_analysis",
+        "evidence": "production_incidents",
+        "population": "hospitals",
+        "geography": "eu",
+        "time_horizon": "12_months",
+        "objective": "gap_mapping"
+      },
+      "prompt": "Produce a comprehensive survey for this structured idea cell:\nDomain: healthcare_ai\nProblem: evaluation\nMethod: incident_analysis\nEvidence: production_incidents\nPopulation: hospitals\nGeography: eu\nTime horizon: 12_months\nObjective: gap_mapping\nInclude evidence quality, conflicting claims, and a prioritized gap map with next-step questions."
+    }
+  ]
+}
