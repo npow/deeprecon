@@ -119,6 +119,23 @@ interface PlayerHeatmapProps {
   strategyCanvasFactors: string[]
 }
 
+type NormalizedCompetitiveFactor = { factor: string; score: number }
+type NormalizedPlayer = Omit<SubCategoryPlayer, "name" | "oneLiner" | "funding" | "stage" | "executionScore" | "visionScore" | "competitiveFactors"> & {
+  name: string
+  oneLiner: string
+  funding: string
+  stage: string
+  executionScore: number
+  visionScore: number
+  competitiveFactors: NormalizedCompetitiveFactor[]
+}
+
+function clampNumber(value: unknown, min: number, max: number): number {
+  const n = typeof value === "number" ? value : Number(value)
+  if (!Number.isFinite(n)) return min
+  return Math.min(max, Math.max(min, n))
+}
+
 // ── Component ─────────────────────────────────────────────────────────
 
 export function PlayerHeatmap({ players, strategyCanvasFactors }: PlayerHeatmapProps) {
@@ -130,6 +147,30 @@ export function PlayerHeatmap({ players, strategyCanvasFactors }: PlayerHeatmapP
   const [sortAsc, setSortAsc] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>("heatmap")
   const [expandedRow, setExpandedRow] = useState<number | null>(null)
+  const normalizedFactors = useMemo(
+    () => (Array.isArray(strategyCanvasFactors) ? strategyCanvasFactors : [])
+      .map((f) => stringify(f).trim())
+      .filter(Boolean),
+    [strategyCanvasFactors],
+  )
+  const normalizedPlayers = useMemo<NormalizedPlayer[]>(
+    () => (Array.isArray(players) ? players : []).map((player) => ({
+      ...player,
+      name: stringify(player?.name),
+      oneLiner: stringify(player?.oneLiner),
+      funding: stringify(player?.funding),
+      stage: stringify(player?.stage),
+      executionScore: clampNumber(player?.executionScore, 0, 100),
+      visionScore: clampNumber(player?.visionScore, 0, 100),
+      websiteUrl: typeof player?.websiteUrl === "string" ? player.websiteUrl : undefined,
+      logoUrl: typeof player?.logoUrl === "string" ? player.logoUrl : undefined,
+      competitiveFactors: (Array.isArray(player?.competitiveFactors) ? player.competitiveFactors : []).map((cf: any) => ({
+        factor: stringify(cf?.factor),
+        score: clampNumber(cf?.score, 0, 10),
+      })),
+    })),
+    [players],
+  )
 
   // Debounce search input
   useEffect(() => {
@@ -139,13 +180,12 @@ export function PlayerHeatmap({ players, strategyCanvasFactors }: PlayerHeatmapP
 
   // Build factor score map per player: Map<canonicalFactorIndex, score>
   const factorScoreMap = useMemo(() => {
-    return players.map((player) => {
+    return normalizedPlayers.map((player) => {
       const scores = new Map<number, number>()
-      if (!Array.isArray(player.competitiveFactors)) return scores
       for (const cf of player.competitiveFactors) {
         const factorName = lowerText(cf.factor)
-        for (let i = 0; i < strategyCanvasFactors.length; i++) {
-          const canonical = lowerText(strategyCanvasFactors[i])
+        for (let i = 0; i < normalizedFactors.length; i++) {
+          const canonical = lowerText(normalizedFactors[i])
           if (factorsMatch(factorName, canonical)) {
             scores.set(i, cf.score)
             break
@@ -154,11 +194,11 @@ export function PlayerHeatmap({ players, strategyCanvasFactors }: PlayerHeatmapP
       }
       return scores
     })
-  }, [players, strategyCanvasFactors])
+  }, [normalizedPlayers, normalizedFactors])
 
   // Composite score: (exec+vision)/2 * 0.6 + avgFactor*10 * 0.4
   const compositeScores = useMemo(() => {
-    return players.map((player, idx) => {
+    return normalizedPlayers.map((player, idx) => {
       const execVision = (player.executionScore + player.visionScore) / 2
       const factors = factorScoreMap[idx]
       let avgFactor = 0
@@ -169,32 +209,32 @@ export function PlayerHeatmap({ players, strategyCanvasFactors }: PlayerHeatmapP
       }
       return execVision * 0.6 + avgFactor * 10 * 0.4
     })
-  }, [players, factorScoreMap])
+  }, [normalizedPlayers, factorScoreMap])
 
   // Unique stages with counts
   const stageCounts = useMemo(() => {
     const counts = new Map<string, number>()
-    for (const p of players) {
+    for (const p of normalizedPlayers) {
       const stage = stringify(p.stage)
       if (stage) counts.set(stage, (counts.get(stage) || 0) + 1)
     }
     return counts
-  }, [players])
+  }, [normalizedPlayers])
 
   // Filter + sort → array of original player indices
   const filteredIndices = useMemo(() => {
-    let indices = players.map((_, i) => i)
+    let indices = normalizedPlayers.map((_, i) => i)
 
     // Stage filter
     if (activeStages.size > 0) {
-      indices = indices.filter((i) => activeStages.has(stringify(players[i].stage)))
+      indices = indices.filter((i) => activeStages.has(stringify(normalizedPlayers[i].stage)))
     }
 
     // Search filter
     if (debouncedSearch) {
       const q = lowerText(debouncedSearch)
       indices = indices.filter((i) => {
-        const p = players[i]
+        const p = normalizedPlayers[i]
         return (
           lowerText(p.name).includes(q) ||
           lowerText(p.oneLiner).includes(q)
@@ -204,7 +244,7 @@ export function PlayerHeatmap({ players, strategyCanvasFactors }: PlayerHeatmapP
 
     // Funded-only filter
     if (showFilter === "funded") {
-      indices = indices.filter((i) => parseFundingForSort(stringify(players[i].funding)) > 0)
+      indices = indices.filter((i) => parseFundingForSort(stringify(normalizedPlayers[i].funding)) > 0)
     }
 
     // Sort
@@ -215,18 +255,18 @@ export function PlayerHeatmap({ players, strategyCanvasFactors }: PlayerHeatmapP
           cmp = compositeScores[a] - compositeScores[b]
           break
         case "name":
-          cmp = stringify(players[a].name).localeCompare(stringify(players[b].name))
+          cmp = stringify(normalizedPlayers[a].name).localeCompare(stringify(normalizedPlayers[b].name))
           break
         case "funding":
           cmp =
-            parseFundingForSort(stringify(players[a].funding)) -
-            parseFundingForSort(stringify(players[b].funding))
+            parseFundingForSort(stringify(normalizedPlayers[a].funding)) -
+            parseFundingForSort(stringify(normalizedPlayers[b].funding))
           break
         case "execution":
-          cmp = players[a].executionScore - players[b].executionScore
+          cmp = normalizedPlayers[a].executionScore - normalizedPlayers[b].executionScore
           break
         case "vision":
-          cmp = players[a].visionScore - players[b].visionScore
+          cmp = normalizedPlayers[a].visionScore - normalizedPlayers[b].visionScore
           break
         default:
           if (sortKey.startsWith("factor-")) {
@@ -242,7 +282,7 @@ export function PlayerHeatmap({ players, strategyCanvasFactors }: PlayerHeatmapP
     else if (showFilter === "top100") indices = indices.slice(0, 100)
 
     return indices
-  }, [players, activeStages, debouncedSearch, showFilter, sortKey, sortAsc, compositeScores, factorScoreMap])
+  }, [normalizedPlayers, activeStages, debouncedSearch, showFilter, sortKey, sortAsc, compositeScores, factorScoreMap])
 
   function handleColumnSort(key: SortKey) {
     if (sortKey === key) setSortAsc(!sortAsc)
@@ -263,11 +303,11 @@ export function PlayerHeatmap({ players, strategyCanvasFactors }: PlayerHeatmapP
   }
 
   const factorAbbrevs = useMemo(
-    () => strategyCanvasFactors.map(abbreviateFactor),
-    [strategyCanvasFactors],
+    () => normalizedFactors.map(abbreviateFactor),
+    [normalizedFactors],
   )
 
-  const colCount = 6 + strategyCanvasFactors.length
+  const colCount = 6 + normalizedFactors.length
 
   function SortIndicator({ column }: { column: SortKey }) {
     if (sortKey !== column) return null
@@ -375,7 +415,7 @@ export function PlayerHeatmap({ players, strategyCanvasFactors }: PlayerHeatmapP
 
         {/* Count */}
         <span className="text-xs text-gray-400 ml-auto whitespace-nowrap">
-          {filteredIndices.length} of {players.length} players
+          {filteredIndices.length} of {normalizedPlayers.length} players
         </span>
       </div>
 
@@ -393,7 +433,7 @@ export function PlayerHeatmap({ players, strategyCanvasFactors }: PlayerHeatmapP
               <col style={{ width: 72 }} />
               <col style={{ width: 48 }} />
               <col style={{ width: 48 }} />
-              {strategyCanvasFactors.map((_, i) => (
+              {normalizedFactors.map((_, i) => (
                 <col key={i} style={{ width: 48 }} />
               ))}
             </colgroup>
@@ -431,7 +471,7 @@ export function PlayerHeatmap({ players, strategyCanvasFactors }: PlayerHeatmapP
                 >
                   Vis <SortIndicator column="vision" />
                 </th>
-                {strategyCanvasFactors.map((factor, fi) => (
+                {normalizedFactors.map((factor, fi) => (
                   <th
                     key={fi}
                     className="px-1 py-2 text-[10px] font-medium text-gray-500 text-center cursor-pointer hover:text-gray-900 select-none"
@@ -445,7 +485,7 @@ export function PlayerHeatmap({ players, strategyCanvasFactors }: PlayerHeatmapP
             </thead>
             <tbody>
               {filteredIndices.map((playerIdx, rank) => {
-                const player = players[playerIdx]
+                const player = normalizedPlayers[playerIdx]
                 const factors = factorScoreMap[playerIdx]
                 const isExpanded = expandedRow === playerIdx
 
@@ -507,7 +547,7 @@ export function PlayerHeatmap({ players, strategyCanvasFactors }: PlayerHeatmapP
                       >
                         {player.visionScore}
                       </td>
-                      {strategyCanvasFactors.map((_, fi) => {
+                      {normalizedFactors.map((_, fi) => {
                         const score = factors.get(fi) || 0
                         const ratio = score / 10
                         return (
@@ -533,7 +573,7 @@ export function PlayerHeatmap({ players, strategyCanvasFactors }: PlayerHeatmapP
                           <div className="max-w-md">
                             <PlayerDetailCard
                               player={player}
-                              strategyCanvasFactors={strategyCanvasFactors}
+                              strategyCanvasFactors={normalizedFactors}
                             />
                           </div>
                         </td>
@@ -551,8 +591,8 @@ export function PlayerHeatmap({ players, strategyCanvasFactors }: PlayerHeatmapP
           {filteredIndices.map((playerIdx) => (
             <PlayerDetailCard
               key={playerIdx}
-              player={players[playerIdx]}
-              strategyCanvasFactors={strategyCanvasFactors}
+              player={normalizedPlayers[playerIdx]}
+              strategyCanvasFactors={normalizedFactors}
             />
           ))}
         </div>
