@@ -1,54 +1,15 @@
-import puppeteer, { type Browser, type Page } from "puppeteer"
-import path from "path"
+import type { Browser, Page } from "puppeteer"
 import {
-  loadCookies,
   saveCookies,
   GeminiSessionError,
   GeminiAPIError,
   type GeminiCookie,
 } from "./gemini-exporter"
+import { withBrowser } from "./deep-research/browser"
 
-// Serialize access — Chrome userDataDir is locked by a single process
-let mutex: Promise<void> = Promise.resolve()
-
-const USER_DATA_DIR = path.join(process.cwd(), "data", "gemini-chrome-profile")
 const GEMINI_URL = "https://gemini.google.com/app"
 
 // ─── Helpers ───
-
-async function launchBrowser(): Promise<Browser> {
-  const isDocker = !!process.env.GEMINI_COOKIES_BASE64
-  const args = [
-    "--no-sandbox",
-    "--disable-dev-shm-usage",
-    "--disable-gpu",
-    "--disable-setuid-sandbox",
-    "--disable-extensions",
-  ]
-
-  const launchOpts: Parameters<typeof puppeteer.launch>[0] = {
-    headless: true,
-    args,
-    ...(isDocker
-      ? { executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || "/usr/bin/chromium-browser" }
-      : { userDataDir: USER_DATA_DIR }),
-  }
-
-  return puppeteer.launch(launchOpts)
-}
-
-async function injectCookies(page: Page, cookies: GeminiCookie[]): Promise<void> {
-  const puppeteerCookies = cookies.map((c) => ({
-    name: c.name,
-    value: c.value,
-    domain: c.domain,
-    path: c.path,
-    ...(c.expires > 0 ? { expires: c.expires } : {}),
-    httpOnly: true,
-    secure: true,
-  }))
-  await page.setCookie(...puppeteerCookies)
-}
 
 async function verifyAuth(page: Page): Promise<void> {
   // After navigating to Gemini, check we're not redirected to a login page
@@ -320,30 +281,7 @@ function extractPresentationId(url: string): string {
 // ─── Public API ───
 
 export async function generateSlidesUrl(prompt: string, title: string): Promise<string> {
-  // Serialize via mutex — Chrome userDataDir can only be used by one process
-  const prevMutex = mutex
-  let resolve: () => void
-  mutex = new Promise<void>((r) => {
-    resolve = r
-  })
-
-  await prevMutex
-
-  let browser: Browser | undefined
-
-  try {
-    console.log("[gemini-puppeteer] Launching browser...")
-    browser = await launchBrowser()
-
-    const page = await browser.newPage()
-    await page.setViewport({ width: 1280, height: 800 })
-
-    // Inject cookies in Docker mode (no userDataDir)
-    if (process.env.GEMINI_COOKIES_BASE64) {
-      const jar = loadCookies()
-      await injectCookies(page, jar.cookies)
-    }
-
+  return withBrowser("gemini", async (browser, page) => {
     // Navigate to Gemini
     console.log("[gemini-puppeteer] Navigating to Gemini...")
     await page.goto(GEMINI_URL, { waitUntil: "domcontentloaded", timeout: 30_000 })
@@ -374,9 +312,7 @@ export async function generateSlidesUrl(prompt: string, title: string): Promise<
     await setPublicSharing(slidesPage)
 
     // Save updated cookies (from Gemini page for session freshness)
-    if (process.env.GEMINI_COOKIES_BASE64) {
-      // In Docker, we don't save to file — cookies come from env
-    } else {
+    if (!process.env.GEMINI_COOKIES_BASE64) {
       try {
         const freshCookies = await page.cookies("https://gemini.google.com")
         const geminiCookies: GeminiCookie[] = freshCookies.map((c) => ({
@@ -400,10 +336,5 @@ export async function generateSlidesUrl(prompt: string, title: string): Promise<
 
     console.log("[gemini-puppeteer] Public Slides URL:", publicUrl)
     return publicUrl
-  } finally {
-    if (browser) {
-      await browser.close().catch(() => {})
-    }
-    resolve!()
-  }
+  })
 }
