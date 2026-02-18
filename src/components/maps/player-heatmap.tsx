@@ -20,12 +20,17 @@ const FACTOR_ABBREVS: [string, string][] = [
   ["ease of use", "EoU"],
 ]
 
-function abbreviateFactor(factor: string): string {
-  const lower = factor.toLowerCase()
+function lowerText(value: unknown): string {
+  return stringify(value).toLowerCase()
+}
+
+function abbreviateFactor(factor: unknown): string {
+  const text = stringify(factor)
+  const lower = text.toLowerCase()
   for (const [key, abbrev] of FACTOR_ABBREVS) {
     if (lower.includes(key)) return abbrev
   }
-  return factor.split(/[\s(/]+/)[0].slice(0, 5)
+  return text.split(/[\s(/]+/)[0].slice(0, 5)
 }
 
 // ── Heatmap color scale: white → indigo (colorblind-safe) ─────────────
@@ -83,14 +88,13 @@ function stageChipLabel(stage: string): string {
 
 // ── Factor matching (word-overlap for fuzzy names) ────────────────────
 
-function extractWords(s: string): string[] {
-  if (!s || typeof s !== "string") return []
-  return s.toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).filter((w) => w.length >= 3)
+function extractWords(s: unknown): string[] {
+  return lowerText(s).replace(/[^a-z\s]/g, " ").split(/\s+/).filter((w) => w.length >= 3)
 }
 
-function factorsMatch(playerFactor: string, canonicalFactor: string): boolean {
-  const pLower = playerFactor.toLowerCase()
-  const cLower = canonicalFactor.toLowerCase()
+function factorsMatch(playerFactor: unknown, canonicalFactor: unknown): boolean {
+  const pLower = lowerText(playerFactor)
+  const cLower = lowerText(canonicalFactor)
   // Direct substring
   if (pLower.includes(cLower) || cLower.includes(pLower)) return true
   // Word overlap
@@ -139,9 +143,9 @@ export function PlayerHeatmap({ players, strategyCanvasFactors }: PlayerHeatmapP
       const scores = new Map<number, number>()
       if (!Array.isArray(player.competitiveFactors)) return scores
       for (const cf of player.competitiveFactors) {
-        const factorName = stringify(cf.factor).toLowerCase()
+        const factorName = lowerText(cf.factor)
         for (let i = 0; i < strategyCanvasFactors.length; i++) {
-          const canonical = strategyCanvasFactors[i].toLowerCase()
+          const canonical = lowerText(strategyCanvasFactors[i])
           if (factorsMatch(factorName, canonical)) {
             scores.set(i, cf.score)
             break
@@ -188,12 +192,12 @@ export function PlayerHeatmap({ players, strategyCanvasFactors }: PlayerHeatmapP
 
     // Search filter
     if (debouncedSearch) {
-      const q = debouncedSearch.toLowerCase()
+      const q = lowerText(debouncedSearch)
       indices = indices.filter((i) => {
         const p = players[i]
         return (
-          stringify(p.name).toLowerCase().includes(q) ||
-          stringify(p.oneLiner).toLowerCase().includes(q)
+          lowerText(p.name).includes(q) ||
+          lowerText(p.oneLiner).includes(q)
         )
       })
     }

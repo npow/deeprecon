@@ -27,9 +27,10 @@ export const stageBadgeColor: Record<string, string> = {
   "Unknown": "bg-gray-50 text-gray-400",
 }
 
-export function getStageColor(stage: string): string {
+export function getStageColor(stage: unknown): string {
+  const stageText = stringify(stage).toLowerCase()
   const key = Object.keys(stageBadgeColor).find(
-    (k) => stage.toLowerCase().includes(k.toLowerCase())
+    (k) => stageText.includes(k.toLowerCase())
   )
   return key ? stageBadgeColor[key] : "bg-gray-100 text-gray-600"
 }
