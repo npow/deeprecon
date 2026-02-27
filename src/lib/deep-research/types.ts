@@ -1,4 +1,4 @@
-export type DeepResearchProvider = "gemini" | "chatgpt" | "claude"
+export type DeepResearchProvider = "gemini" | "chatgpt" | "claude" | "deerflow"
 
 export interface DeepResearchResult {
   markdown: string

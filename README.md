@@ -37,6 +37,7 @@ DeepRecon is an AI-powered competitive intelligence platform that helps startup 
 - Each provider's results are **merged incrementally** — data saves to disk as each provider completes
 - Real-time SSE progress tracking with per-provider status, token counts, and phase indicators
 - Automatic deduplication of players and sub-categories across providers
+- Optional `deerflow` deep-research sidecar can run in addition to browser-based providers when `DEERFLOW_URL` is set
 
 ### Competitive Scans
 
@@ -168,6 +169,14 @@ src/
 - **Postgres-backed persistence** — maps, scans, feed summaries, and scan jobs persist in Postgres when configured
 - **Local file fallback** — JSON files under `/data/` are used only when DB env vars are not configured
 - **Parallel fanout** — single prompt sent to multiple LLM providers via OpenAI-compatible proxy, results deduplicated and merged
+- **Relay observability** — route-level request/response/error telemetry with request IDs and automatic feature tagging
+- **Outbound req/resp telemetry** — all server-side `fetch` calls are logged with duration, status, host, and inferred provider
+
+### Telemetry Sinks
+
+- `TELEMETRY_SINKS=ndjson` (default) writes JSON lines to `data/telemetry/events.ndjson`
+- `TELEMETRY_SINKS=console` logs structured events to stdout
+- `TELEMETRY_SINKS=console,ndjson` enables both
 
 ## Tech Stack
 

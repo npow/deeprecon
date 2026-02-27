@@ -2,6 +2,8 @@ import puppeteer, { type Browser, type Page } from "puppeteer"
 import path from "path"
 import type { DeepResearchProvider } from "./types"
 
+type BrowserDeepResearchProvider = Exclude<DeepResearchProvider, "deerflow">
+
 // Serialize access — only one deep-research session at a time
 let mutex: Promise<void> = Promise.resolve()
 
@@ -10,7 +12,7 @@ const USER_DATA_DIR = path.join(process.cwd(), "data", "chrome-profile")
 /** Default CDP port for connecting to user's running Chrome */
 const CDP_PORT = parseInt(process.env.CHROME_CDP_PORT || "9222", 10)
 
-const COOKIE_ENV_VARS: Record<DeepResearchProvider, string> = {
+const COOKIE_ENV_VARS: Record<BrowserDeepResearchProvider, string> = {
   gemini: "GEMINI_COOKIES_BASE64",
   chatgpt: "CHATGPT_COOKIES_BASE64",
   claude: "CLAUDE_COOKIES_BASE64",
@@ -74,7 +76,7 @@ async function connectToChrome(): Promise<Browser | null> {
 
 // ─── Headless launch (Docker — inject cookies) ───
 
-async function launchHeadless(provider: DeepResearchProvider): Promise<Browser> {
+async function launchHeadless(provider: BrowserDeepResearchProvider): Promise<Browser> {
   const cookieEnvVar = COOKIE_ENV_VARS[provider]
   const isDocker = !!process.env[cookieEnvVar]
 
@@ -95,7 +97,7 @@ async function launchHeadless(provider: DeepResearchProvider): Promise<Browser> 
   })
 }
 
-async function injectCookies(page: Page, provider: DeepResearchProvider): Promise<void> {
+async function injectCookies(page: Page, provider: BrowserDeepResearchProvider): Promise<void> {
   const cookieEnvVar = COOKIE_ENV_VARS[provider]
   const base64 = process.env[cookieEnvVar]
   if (!base64) return
@@ -140,7 +142,7 @@ async function injectCookies(page: Page, provider: DeepResearchProvider): Promis
  * Docker: launches headless Chrome and injects cookies from env vars.
  */
 export async function withBrowser<T>(
-  provider: DeepResearchProvider,
+  provider: BrowserDeepResearchProvider,
   fn: (browser: Browser, page: Page) => Promise<T>
 ): Promise<T> {
   const prevMutex = mutex

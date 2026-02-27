@@ -5,6 +5,7 @@ export { DeepResearchError, DeepResearchAuthError } from "./browser"
 export { runDeepResearch as runGeminiDeepResearch } from "./gemini"
 export { runDeepResearch as runChatGPTDeepResearch } from "./chatgpt"
 export { runDeepResearch as runClaudeDeepResearch } from "./claude"
+export { runDeepResearch as runDeerFlowDeepResearch } from "./deerflow"
 
 const providers: Record<
   DeepResearchProvider,
@@ -13,6 +14,7 @@ const providers: Record<
   gemini: () => import("./gemini"),
   chatgpt: () => import("./chatgpt"),
   claude: () => import("./claude"),
+  deerflow: () => import("./deerflow"),
 }
 
 /**
@@ -34,7 +36,7 @@ export async function runAllDeepResearch(
   prompt: string,
   providerList?: DeepResearchProvider[]
 ): Promise<DeepResearchResult[]> {
-  const toRun = providerList ?? (["gemini", "chatgpt", "claude"] as DeepResearchProvider[])
+  const toRun = providerList ?? defaultProviders()
   const results: DeepResearchResult[] = []
 
   for (const provider of toRun) {
@@ -54,4 +56,12 @@ export async function runAllDeepResearch(
   }
 
   return results
+}
+
+function defaultProviders(): DeepResearchProvider[] {
+  const providers: DeepResearchProvider[] = ["gemini", "chatgpt", "claude"]
+  if (process.env.DEERFLOW_URL) {
+    providers.push("deerflow")
+  }
+  return providers
 }
