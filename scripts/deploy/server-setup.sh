@@ -6,12 +6,17 @@
 #   2. Run: curl -sSL <raw-url-of-this-script> | bash
 #      (or copy this script onto the server and run it)
 #   3. Add the printed SSH public key as a deploy key on the GitHub repo
-#   4. Then run: git clone git@github.com:npow/recon.git /root/recon
+#   4. Then run: git clone git@github.com:$GITHUB_USER/$GITHUB_REPO.git /root/$GITHUB_REPO
 #   5. Follow the remaining "Next steps" printed at the end
 set -euo pipefail
 
+# ── Configure these for your fork ──────────────────────────────────────────
+GITHUB_USER="${GITHUB_USER:-npow}"
+GITHUB_REPO="${GITHUB_REPO:-deeprecon}"
+# ───────────────────────────────────────────────────────────────────────────
+
 SERVER_IP=$(hostname -I | awk '{print $1}')
-REPO_DIR="/root/recon"
+REPO_DIR="/root/${GITHUB_REPO}"
 
 echo "==> Installing Docker"
 apt-get update
@@ -44,7 +49,7 @@ echo "  Server setup complete!"
 echo "========================================="
 echo ""
 echo "=== STEP 1: Add this PUBLIC key as a deploy key on the repo ==="
-echo "   Go to: github.com/npow/recon/settings/keys -> Add deploy key"
+echo "   Go to: github.com/${GITHUB_USER}/${GITHUB_REPO}/settings/keys -> Add deploy key"
 echo ""
 cat /root/.ssh/id_ed25519.pub
 echo ""
