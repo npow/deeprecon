@@ -3,10 +3,11 @@ import { loadScan } from "@/lib/scans-store"
 import { buildPitchDeckPrompt } from "@/lib/pitch-deck-prompt"
 import { generateSlidesUrl } from "@/lib/gemini-puppeteer"
 import { GeminiSessionError, GeminiAPIError } from "@/lib/gemini-exporter"
+import { withRelayTelemetry } from "@/lib/relay-observability"
 
 export const maxDuration = 180
 
-export async function POST(request: NextRequest) {
+async function postPitchDeck(request: NextRequest) {
   let body: { scanId?: string }
   try {
     body = await request.json()
@@ -55,3 +56,5 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
+export const POST = withRelayTelemetry(postPitchDeck)

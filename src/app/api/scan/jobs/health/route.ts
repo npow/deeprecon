@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import { reapStaleRunningJobs, summarizeScanJobsHealth } from "@/lib/scan-jobs-store"
+import { withRelayTelemetry } from "@/lib/relay-observability"
 
-export async function GET(request: NextRequest) {
+async function getScanJobsHealth(request: NextRequest) {
   const staleMinutesRaw = request.nextUrl.searchParams.get("staleMinutes")
   const staleMinutes = staleMinutesRaw ? Number(staleMinutesRaw) : 20
   const safeStaleMinutes = Number.isFinite(staleMinutes) && staleMinutes > 0 ? staleMinutes : 20
   return NextResponse.json(await summarizeScanJobsHealth(safeStaleMinutes))
 }
 
-export async function POST(request: NextRequest) {
+async function postScanJobsHealth(request: NextRequest) {
   const debugEnabled =
     process.env.NODE_ENV !== "production"
     || process.env.NEXT_PUBLIC_DEBUG_MODE === "1"
@@ -24,3 +25,6 @@ export async function POST(request: NextRequest) {
   const health = await summarizeScanJobsHealth(safeStaleMinutes)
   return NextResponse.json({ reaped, health })
 }
+
+export const GET = withRelayTelemetry(getScanJobsHealth)
+export const POST = withRelayTelemetry(postScanJobsHealth)

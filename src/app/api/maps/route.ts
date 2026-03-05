@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server"
 import { loadAllMaps } from "@/lib/maps-store"
 import { loadVerticals } from "@/lib/verticals-store"
+import { withRelayTelemetry } from "@/lib/relay-observability"
 
-export async function GET() {
+async function getMaps() {
   const maps = await loadAllMaps()
   const mapBySlug = new Map(maps.map((m) => [m.slug, m]))
   const allVerticals = await loadVerticals()
@@ -23,3 +24,5 @@ export async function GET() {
 
   return NextResponse.json({ verticals })
 }
+
+export const GET = withRelayTelemetry(async (_request, _context) => getMaps())

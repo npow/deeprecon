@@ -11,6 +11,8 @@ import {
   DEFAULT_PROVIDERS,
   type ResearchProvider,
 } from "@/lib/research"
+import { withRelayTelemetry } from "@/lib/relay-observability"
+import { emitTelemetry } from "@/lib/telemetry"
 
 let turboRunning = false
 
@@ -25,7 +27,7 @@ interface MapGenResult {
   subCategories: SubCategory[]
 }
 
-export async function POST(request: NextRequest) {
+async function postMapsTurbo(request: NextRequest) {
   if (turboRunning) {
     return new Response(
       JSON.stringify({ error: "Turbo populate already running" }),
@@ -49,6 +51,13 @@ export async function POST(request: NextRequest) {
   } catch {
     // defaults
   }
+  emitTelemetry({
+    type: "maps.turbo.config",
+    level: "info",
+    discoverVerticals,
+    enrichAfter,
+    enrichConcurrency,
+  })
 
   // Discover which providers are actually available on CLIProxyAPI
   const availableProviders = await getAvailableProviders()
@@ -356,7 +365,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET returns current provider availability and verticals
-export async function GET() {
+async function getMapsTurbo() {
   const available = await getAvailableProviders()
   const availableIds = new Set(available.map((p) => p.id))
   const verticals = await loadVerticals()
@@ -387,3 +396,6 @@ export async function GET() {
     { headers: { "Content-Type": "application/json" } },
   )
 }
+
+export const POST = withRelayTelemetry(postMapsTurbo, { feature: "maps.turbo.populate" })
+export const GET = withRelayTelemetry(async (_request, _context) => getMapsTurbo(), { feature: "maps.turbo.status" })

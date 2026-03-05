@@ -1,0 +1,46 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: deeprecon-telemetry
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: deeprecon
+          service: deeprecon-relay
+          __path__: /var/log/deeprecon/events.ndjson
+
+    pipeline_stages:
+      - json:
+          expressions:
+            ts: ts
+            type: type
+            level: level
+            feature: feature
+            route: route
+            request_id: requestId
+            scan_id: scanId
+            provider: provider
+            status_code: statusCode
+            duration_ms: durationMs
+            ok: ok
+      - labels:
+          type:
+          level:
+          feature:
+          route:
+          provider:
+      - timestamp:
+          source: ts
+          format: RFC3339
+          action_on_failure: skip
+      - output:
+          source: type

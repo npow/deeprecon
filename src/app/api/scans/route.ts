@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server"
 import { listScans } from "@/lib/scans-store"
+import { withRelayTelemetry } from "@/lib/relay-observability"
 
-export async function GET() {
+async function getScans() {
   try {
     const scans = await listScans()
     return NextResponse.json(scans)
@@ -11,3 +12,5 @@ export async function GET() {
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
+
+export const GET = withRelayTelemetry(async (_request, _context) => getScans())

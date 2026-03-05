@@ -3,11 +3,12 @@ import { loadMap, saveMap } from "@/lib/maps-store"
 import { loadVerticals } from "@/lib/verticals-store"
 import { enrichSubCategory } from "@/lib/ai/pipeline"
 import { mergeEnrichmentResults } from "@/lib/enrich"
+import { withRelayTelemetry } from "@/lib/relay-observability"
 
 // In-memory lock per slug to prevent concurrent enrichment runs
 const enrichLocks = new Map<string, boolean>()
 
-export async function POST(
+async function postMapEnrich(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
@@ -159,3 +160,5 @@ export async function POST(
     },
   })
 }
+
+export const POST = withRelayTelemetry(postMapEnrich)

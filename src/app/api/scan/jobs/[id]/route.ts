@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { loadScanJob } from "@/lib/scan-jobs-store"
+import { withRelayTelemetry } from "@/lib/relay-observability"
 
-export async function GET(
+async function getScanJob(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -12,3 +13,5 @@ export async function GET(
   }
   return NextResponse.json(job)
 }
+
+export const GET = withRelayTelemetry(getScanJob)

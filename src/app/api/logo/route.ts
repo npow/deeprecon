@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server"
+import { withRelayTelemetry } from "@/lib/relay-observability"
 
 function normalizeWebsiteUrl(value?: string | null): string | undefined {
   if (!value || typeof value !== "string") return undefined
@@ -56,7 +57,7 @@ function fallbackSvg(host?: string): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="${initials}"><rect width="128" height="128" rx="64" fill="#e5e7eb"/><text x="50%" y="53%" dominant-baseline="middle" text-anchor="middle" font-family="ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial" font-size="44" fill="#374151">${initials}</text></svg>`
 }
 
-export async function GET(request: NextRequest) {
+async function getLogo(request: NextRequest) {
   const website = request.nextUrl.searchParams.get("website")
   const host = hostFromWebsite(website)
 
@@ -98,3 +99,5 @@ export async function GET(request: NextRequest) {
     },
   })
 }
+
+export const GET = withRelayTelemetry(getLogo)

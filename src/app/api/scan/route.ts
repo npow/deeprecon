@@ -15,8 +15,9 @@ import { computeReadinessScore } from "@/lib/readiness-score"
 import { computeLucrativenessScore } from "@/lib/lucrativeness-score"
 import { computeValidationScore } from "@/lib/validation-score"
 import { computeOpportunityScore } from "@/lib/opportunity-score"
-import { runWithScanContext, timed } from "@/lib/telemetry"
+import { emitTelemetry, runWithScanContext, timed } from "@/lib/telemetry"
 import { saveScanJob, updateScanJob } from "@/lib/scan-jobs-store"
+import { withRelayTelemetry } from "@/lib/relay-observability"
 
 type ScanEmitter = (event: { type: string; data: unknown }) => boolean
 const MAX_LOGGED_IDEA_CHARS = 10_000
@@ -223,7 +224,7 @@ async function executeScanRun(input: ScanRunInput): Promise<string> {
   return scanId
 }
 
-export async function POST(request: NextRequest) {
+async function postScan(request: NextRequest) {
   const rawBody = await request.text()
   let body: any
   try {
@@ -240,6 +241,12 @@ export async function POST(request: NextRequest) {
     })
   }
   const { ideaText, settings: userSettings, remix, runInBackground } = body
+  emitTelemetry({
+    type: "scan.mode",
+    level: "info",
+    mode: runInBackground === true ? "background" : "stream",
+    remix: remix ? true : false,
+  })
   const settings: ScanSettings = { ...DEFAULT_SETTINGS, ...userSettings }
   const remixParentScanId =
     remix && typeof remix.parentScanId === "string" && remix.parentScanId.trim().length > 0
@@ -442,3 +449,5 @@ export async function POST(request: NextRequest) {
     },
   })
 }
+
+export const POST = withRelayTelemetry(postScan)

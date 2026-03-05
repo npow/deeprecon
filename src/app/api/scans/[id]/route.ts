@@ -4,8 +4,9 @@ import { computeReadinessScore } from "@/lib/readiness-score"
 import { computeLucrativenessScore } from "@/lib/lucrativeness-score"
 import { computeValidationScore } from "@/lib/validation-score"
 import { computeOpportunityScore } from "@/lib/opportunity-score"
+import { withRelayTelemetry } from "@/lib/relay-observability"
 
-export async function GET(
+async function getScan(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -42,3 +43,5 @@ export async function GET(
   }
   return NextResponse.json(scan)
 }
+
+export const GET = withRelayTelemetry(getScan)

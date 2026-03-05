@@ -10,11 +10,12 @@ import {
   getAvailableProviders,
   type ResearchProvider,
 } from "@/lib/research"
+import { withRelayTelemetry } from "@/lib/relay-observability"
 
 // In-memory lock per slug to prevent concurrent refresh runs
 const refreshLocks = new Map<string, boolean>()
 
-export async function GET(
+async function getMap(
   _request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
@@ -107,7 +108,7 @@ async function mergeProviderIntoMap(
   return { totalPlayers, subCategories: mergedSubs.length, previousPlayers, previousSubs }
 }
 
-export async function POST(
+async function postMap(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
@@ -287,6 +288,9 @@ export async function POST(
     },
   })
 }
+
+export const GET = withRelayTelemetry(getMap)
+export const POST = withRelayTelemetry(postMap)
 
 /** Fallback: single-provider Gemini pipeline, still emits SSE events */
 async function geminiRefreshFallback(

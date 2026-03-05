@@ -176,8 +176,15 @@ src/
 
 - `TELEMETRY_SINKS=ndjson` (default) writes JSON lines to `data/telemetry/events.ndjson`
 - `TELEMETRY_SINKS=console` logs structured events to stdout
-- `TELEMETRY_SINKS=console,ndjson` enables both
+- `TELEMETRY_SINKS=betterstack` ships structured events to Better Stack ingest
+- `TELEMETRY_SINKS=console,ndjson,betterstack` enables multiple sinks
+- `OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer <token>` adds auth headers for OTLP trace export (Grafana Cloud, Better Stack, etc.)
 
+### Sentry
+
+- Install + configure with `SENTRY_DSN` (server) and `NEXT_PUBLIC_SENTRY_DSN` (client).
+- Optional build upload settings: `SENTRY_ORG` and `SENTRY_PROJECT`.
+- Runtime sampling: `SENTRY_TRACES_SAMPLE_RATE` and `NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE`.
 ## Tech Stack
 
 | Layer | Technology |
