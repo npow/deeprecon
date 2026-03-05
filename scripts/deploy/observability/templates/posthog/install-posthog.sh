@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DOMAIN="${1:-posthog.deeprecon.app}"
+DOMAIN="${1:-}"
+if [ -z "$DOMAIN" ]; then
+  echo "Usage: $0 <posthog-domain>"
+  exit 1
+fi
 WORKDIR="/root/posthog-hobby"
 REPO_DIR="$WORKDIR/posthog"
 

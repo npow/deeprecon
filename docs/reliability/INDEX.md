@@ -1,6 +1,6 @@
 # Reliability Index
 
-Last reviewed: 2026-03-01
+Last reviewed: 2026-03-05
 Owner: Platform
 
 - `src/lib/telemetry.ts`: trace/timing instrumentation.
@@ -10,4 +10,7 @@ Owner: Platform
 - `scripts/scan-job-reaper.mjs`: stale-job remediation.
 - `scripts/deploy/observability/setup-hetzner-recon.sh`: repeatable Grafana/Loki/PostHog deployment on Hetzner.
 - `docs/reliability/OBSERVABILITY_STACK.md`: operational runbook and rollback.
+- `docs/reliability/OBSERVABILITY_ALERTS.md`: Loki alert rule definitions and remediation steps.
+- `docs/reliability/OBSERVABILITY_MAINTENANCE.md`: retention policy and cleanup cadence.
+- `docs/reliability/ANALYTICS_ARCHITECTURE_DECISION.md`: analytics hosting decision and migration triggers.
 - `docs/reliability/OBSERVABILITY_TODO.md`: prioritized remaining observability work and acceptance criteria.

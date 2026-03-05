@@ -1,0 +1,23 @@
+groups:
+  - name: deeprecon-availability
+    interval: 1m
+    rules:
+      - alert: DeepReconHigh5xxRate
+        expr: sum(count_over_time({job="deeprecon"} | json | statusCode >= 500 [5m])) > 20
+        for: 5m
+        labels:
+          severity: warning
+          service: deeprecon
+        annotations:
+          summary: "Elevated DeepRecon 5xx rate"
+          description: "More than 20 5xx responses across 5m."
+
+      - alert: DeepReconRepeatedRouteFailures
+        expr: max(sum by (route) (count_over_time({job="deeprecon",route=~".+"} | json | statusCode >= 500 [10m]))) > 8
+        for: 10m
+        labels:
+          severity: critical
+          service: deeprecon
+        annotations:
+          summary: "Repeated failures on one DeepRecon route"
+          description: "A single route has more than 8 server failures over 10m."

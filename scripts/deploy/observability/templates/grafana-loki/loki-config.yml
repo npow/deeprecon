@@ -29,4 +29,10 @@ limits_config:
   volume_enabled: true
 
 ruler:
+  storage:
+    type: local
+    local:
+      directory: /etc/loki/rules
+  rule_path: /tmp/loki/rules
+  enable_api: true
   alertmanager_url: http://localhost:9093
