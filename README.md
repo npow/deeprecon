@@ -2,6 +2,8 @@
 
 # DeepRecon
 
+[![Docs](https://img.shields.io/badge/docs-mintlify-18a34a?style=flat-square)](https://mintlify.com/npow/deeprecon)
+
 **Competitive intelligence and market mapping for startup founders.**
 
 See where the opportunities are before you build.
